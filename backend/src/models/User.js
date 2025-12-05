@@ -9,34 +9,34 @@ export const User = {
     return rows[0];
   },
 
-  async findByVerificationToken(token) {
-    const [rows] = await pool.execute(
-      "SELECT * FROM users WHERE verification_token = ? LIMIT 1",
-      [token]
+  async create({ name, email, password, role }) {
+    const [res] = await pool.execute(
+      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
+      [name, email, password, role]
     );
-    return rows[0];
+
+    return { id: res.insertId, name, email, role };
   },
 
-  async create({ name, email, password, role, verification_token }) {
-    const [result] = await pool.execute(
-      `INSERT INTO users (name, email, password, role, verification_token)
-       VALUES (?, ?, ?, ?, ?)`,
-      [name, email, password, role, verification_token]
+  async updateVerificationToken(id, token) {
+    await pool.execute(
+      "UPDATE users SET verification_token = ? WHERE id = ?",
+      [token, id]
     );
-
-    return {
-      id: result.insertId,
-      name,
-      email,
-      role,
-      verification_token,
-    };
   },
 
   async verifyUser(id) {
     await pool.execute(
-      `UPDATE users SET verified = 1, verification_token = NULL WHERE id = ?`,
+      "UPDATE users SET verified = 1, verification_token = NULL WHERE id = ?",
       [id]
     );
   },
+
+  async findById(id) {
+    const [rows] = await pool.execute(
+      "SELECT id, name, email, role, verified, verification_token FROM users WHERE id = ? LIMIT 1",
+      [id]
+    );
+    return rows[0];
+  }
 };

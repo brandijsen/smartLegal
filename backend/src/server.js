@@ -1,21 +1,35 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import { pool } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
 const app = express();
+
+// CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+
 app.use(express.json());
 
-// Test DB connection
+// Test DB
 pool.execute("SELECT 1")
   .then(() => console.log("🟢 MySQL connected"))
   .catch(err => console.error("🔴 MySQL error:", err));
 
-app.use("/auth", authRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
 
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);
-
+// Start
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log("BASE_URL:", process.env.BASE_URL);
+  console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
 });
