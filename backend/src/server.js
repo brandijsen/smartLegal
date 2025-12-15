@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { pool } from "./config/db.js";
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./routes/auth.routes.js";
+import documentRoutes from "./routes/document.routes.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ pool.execute("SELECT 1")
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/documents", documentRoutes);
 
 // Start
 const PORT = process.env.PORT || 5000;

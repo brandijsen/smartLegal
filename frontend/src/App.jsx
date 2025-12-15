@@ -10,6 +10,7 @@ import GoogleSuccess from "./pages/GoogleSuccess";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import DummyPrivatePage from "./pages/DummyPrivatePage";
+import Documents from "./pages/Documents";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PersistLogin from "./components/PersistLogin";
@@ -35,6 +36,17 @@ function App() {
               </PersistLogin>
             }
           />
+
+          <Route
+  path="/documents"
+  element={
+    <PersistLogin>
+      <ProtectedRoute>
+        <Documents />
+      </ProtectedRoute>
+    </PersistLogin>
+  }
+/>
 
           {/* GOOGLE */}
           <Route

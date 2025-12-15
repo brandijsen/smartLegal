@@ -6,32 +6,41 @@ const VerificationBanner = () => {
   const dispatch = useDispatch();
   const { user, emailSent } = useSelector((state) => state.auth);
 
-  const [hide, setHide] = useState(false);
+  // stato SOLO LOCALE (non persistito)
+  const [visible, setVisible] = useState(true);
 
-  // Nasconde il banner dopo 3 secondi dall'invio
+  // auto-hide dopo invio email
   useEffect(() => {
     if (emailSent) {
-      const timer = setTimeout(() => setHide(true), 3000);
+      const timer = setTimeout(() => {
+        setVisible(false);
+      }, 3000);
+
       return () => clearTimeout(timer);
     }
   }, [emailSent]);
 
-  if (!user || user.verified === 1 || hide) return null;
+  // condizioni di render
+  if (!user || user.verified === 1 || !visible) return null;
 
   return (
-    <div className="bg-yellow-100 border-b border-yellow-300 py-3 text-center text-sm text-yellow-900">
+    <div className="fixed top-16 left-0 w-full z-50 bg-yellow-100 border-b border-yellow-300 py-3 text-center text-sm text-yellow-900">
       {!emailSent ? (
         <>
-          <span className="font-semibold">Your email is not verified.</span>
+          <span className="font-semibold">
+            Your email is not verified.
+          </span>
           <button
             onClick={() => dispatch(sendVerificationEmail())}
-            className="ml-2 underline text-yellow-800 hover:text-yellow-900"
+            className="ml-2 underline font-medium hover:text-yellow-800"
           >
             Verify now
           </button>
         </>
       ) : (
-        <span className="text-green-700 font-semibold">Email sent ✔️</span>
+        <span className="font-semibold text-green-700">
+          Verification email sent ✔️
+        </span>
       )}
     </div>
   );
