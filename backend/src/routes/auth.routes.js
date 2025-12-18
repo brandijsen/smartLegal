@@ -8,10 +8,10 @@ import {
   googleAuth,
   googleCallback,
   logout,
-  forgotPassword, resetPassword
-} from "../controllers/authController.js";
+  forgotPassword, resetPassword, refresh
+} from "../controllers/auth.controller.js";
 
-import { protect } from "../middlewares/authMiddleware.js";
+import { protect } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -32,5 +32,6 @@ router.post("/logout", logout);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
+router.post("/refresh", refresh);
 
 export default router;

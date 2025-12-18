@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
-
-/* FONT GLOBALI (serif per titoli, sans per testi) */
+/* FONT GLOBALI */
 :root {
   --font-title: "DM Serif Display", serif;
   --font-body: "Inter", sans-serif;
@@ -10,20 +9,17 @@
 /* IMPOSTAZIONI GENERALI */
 body {
   font-family: var(--font-body);
-  background-color: #F5F7FA; /* grigio elegante studio legale */
-  color: #1B1C1E; /* testo scuro professionale */
+  background-color: #F5F7FA;
+  color: #1B1C1E;
+  margin: 0;
 }
 
-/* TITOLI */
+/* TITOLI — SOLO FONT */
 h1, h2, h3 {
   font-family: var(--font-title);
-  color: #0A2342; /* blu navy professionale */
 }
 
-/* LINK */
+/* LINK — TAILWIND GESTISCE I COLORI */
 a {
-  color: #0A2342;
-}
-a:hover {
-  color: #102C4C;
+  text-decoration: none;
 }

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setUser, setToken } from "../store/authSlice";
+import { setUser } from "../store/authSlice";
 import api from "../api/axios";
 
 const GoogleSuccess = () => {
@@ -13,17 +13,22 @@ const GoogleSuccess = () => {
 
   useEffect(() => {
     const finish = async () => {
-      localStorage.setItem("accessToken", token);
-      dispatch(setToken(token));
+      try {
+        // salva SOLO access token
+        localStorage.setItem("accessToken", token);
 
-      const res = await api.get("/auth/me");
-      dispatch(setUser(res.data));
+        // fetch utente
+        const res = await api.get("/auth/me");
+        dispatch(setUser(res.data));
 
-      navigate("/", { replace: true });
+        navigate("/", { replace: true });
+      } catch (err) {
+        console.error("Google login error:", err);
+      }
     };
 
     if (token) finish();
-  }, [token]);
+  }, [token, dispatch, navigate]);
 
   return <div className="pt-40 text-center text-xl">Logging you in…</div>;
 };
