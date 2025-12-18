@@ -1,7 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axios";
 
-// --- REGISTER ---
+// ───────────────────────────────────────────────
+// ASYNC THUNKS
+// ───────────────────────────────────────────────
+
+// REGISTER
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async ({ name, email, password }, thunkAPI) => {
@@ -16,7 +20,7 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// --- LOGIN ---
+// LOGIN
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ email, password }, thunkAPI) => {
@@ -31,7 +35,7 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// --- SEND VERIFICATION EMAIL ---
+// SEND VERIFICATION EMAIL
 export const sendVerificationEmail = createAsyncThunk(
   "auth/sendVerificationEmail",
   async (_, thunkAPI) => {
@@ -46,24 +50,27 @@ export const sendVerificationEmail = createAsyncThunk(
   }
 );
 
+// ───────────────────────────────────────────────
+// SLICE
+// ───────────────────────────────────────────────
+
 const authSlice = createSlice({
   name: "auth",
 
   initialState: {
-    user: null,
-    token: localStorage.getItem("accessToken") || null,
+    user: JSON.parse(localStorage.getItem("user")) || null,
     loading: false,
     error: null,
     emailSent: false,
-    resetSuccess: false,       // 👈 AGGIUNTO
+    resetSuccess: false,
   },
 
   reducers: {
     logout: (state) => {
       state.user = null;
-      state.token = null;
       state.emailSent = false;
       state.resetSuccess = false;
+
       localStorage.removeItem("user");
       localStorage.removeItem("accessToken");
     },
@@ -73,12 +80,6 @@ const authSlice = createSlice({
       localStorage.setItem("user", JSON.stringify(action.payload));
     },
 
-    setToken: (state, action) => {
-      state.token = action.payload;
-      localStorage.setItem("accessToken", action.payload);
-    },
-
-    // 👇 AGGIUNTI
     resetPasswordSuccess: (state) => {
       state.resetSuccess = true;
     },
@@ -90,7 +91,7 @@ const authSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      // --- REGISTER ---
+      // REGISTER
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -98,7 +99,6 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
-        state.token = action.payload.accessToken;
 
         localStorage.setItem("user", JSON.stringify(action.payload.user));
         localStorage.setItem("accessToken", action.payload.accessToken);
@@ -108,7 +108,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      // --- LOGIN ---
+      // LOGIN
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -116,7 +116,6 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
-        state.token = action.payload.accessToken;
 
         localStorage.setItem("user", JSON.stringify(action.payload.user));
         localStorage.setItem("accessToken", action.payload.accessToken);
@@ -126,7 +125,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      // --- SEND VERIFICATION EMAIL ---
+      // SEND VERIFICATION EMAIL
       .addCase(sendVerificationEmail.fulfilled, (state) => {
         state.emailSent = true;
       });
@@ -136,7 +135,6 @@ const authSlice = createSlice({
 export const {
   logout,
   setUser,
-  setToken,
   resetPasswordSuccess,
   clearResetSuccess,
 } = authSlice.actions;

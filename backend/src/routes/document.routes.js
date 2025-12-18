@@ -4,7 +4,7 @@ import { uploadPDF } from "../middlewares/upload.middleware.js";
 import {
   uploadDocument,
   getUserDocuments,
-  getDocumentById 
+  getDocumentById, retryDocument, deleteDocument
 } from "../controllers/document.controller.js";
 
 const router = express.Router();
@@ -18,5 +18,10 @@ router.post(
   uploadPDF.single("file"),
   uploadDocument
 );
+
+router.post("/:id/retry", protect, retryDocument);
+
+router.delete("/:id", protect, deleteDocument);
+
 
 export default router;

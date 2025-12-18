@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import api from "../api/axios";
-import { setUser, setToken } from "../store/authSlice";
+import { setUser } from "../store/authSlice";
 
 const VerifySuccess = () => {
   const [params] = useSearchParams();
@@ -14,19 +14,17 @@ const VerifySuccess = () => {
   useEffect(() => {
     const finishLogin = async () => {
       try {
-        // reset user vecchio
+        // reset user precedente
         localStorage.removeItem("user");
 
-        // salva token
+        // salva SOLO access token
         localStorage.setItem("accessToken", token);
-        dispatch(setToken(token));
 
         // fetch utente aggiornato
         const res = await api.get("/auth/me");
         dispatch(setUser(res.data));
 
-        setLoading(false); // smetti di mostrare "verifying"
-
+        setLoading(false);
       } catch (err) {
         console.error("Verification login error:", err);
         setLoading(false);
@@ -47,7 +45,6 @@ const VerifySuccess = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-10 rounded-lg shadow-lg text-center max-w-md">
-
         <h1 className="text-3xl font-bold text-green-600">
           Email verified successfully!
         </h1>

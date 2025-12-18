@@ -37,11 +37,31 @@ export const DocumentModel = {
 async findById(documentId, userId) {
   const [rows] = await pool.execute(
     `
-    SELECT id, original_name, status, uploaded_at, processed_at
+    SELECT
+      id,
+      original_name,
+      stored_name,
+      status,
+      uploaded_at,
+      processed_at
     FROM documents
     WHERE id = ? AND user_id = ?
     `,
     [documentId, userId]
+  );
+
+  return rows[0];
+},
+
+
+async findByIdForWorker(documentId) {
+  const [rows] = await pool.execute(
+    `
+    SELECT id, user_id, stored_name
+    FROM documents
+    WHERE id = ?
+    `,
+    [documentId]
   );
 
   return rows[0];
@@ -64,5 +84,14 @@ async findById(documentId, userId) {
     "UPDATE documents SET status = ? WHERE stored_name = ?",
     [status, storedName]
   );
+},
+
+async deleteById(documentId) {
+  await pool.execute(
+    "DELETE FROM documents WHERE id = ?",
+    [documentId]
+  );
 }
+
+
 };

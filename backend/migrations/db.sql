@@ -44,7 +44,7 @@ CREATE TABLE document_results (
   document_id INT NOT NULL,
 
   raw_text LONGTEXT NOT NULL,
-  parsed_json JSON NOT NULL,
+  parsed_json JSON NULL,
 
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
