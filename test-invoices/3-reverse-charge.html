@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Charge Invoice - EuroTech GmbH</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            border-bottom: 3px solid #7c3aed;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .invoice-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #7c3aed;
+            margin: 0;
+        }
+        .company-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .vat-notice {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #7c3aed;
+            margin-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 30px;
+            float: right;
+            width: 300px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .total-row.final {
+            border-top: 2px solid #7c3aed;
+            font-size: 18px;
+            font-weight: bold;
+            color: #7c3aed;
+            padding-top: 12px;
+            margin-top: 8px;
+        }
+        .footer {
+            clear: both;
+            margin-top: 80px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="invoice-title">INVOICE</h1>
+        <div class="company-info">
+            <strong>EuroTech Solutions GmbH</strong><br>
+            Hauptstraße 123, 10115 Berlin, Germany<br>
+            VAT ID: DE123456789<br>
+            Register: HRB 98765 B, Amtsgericht Berlin
+        </div>
+    </div>
+
+    <div class="vat-notice">
+        <strong>⚠️ REVERSE CHARGE / INVERSIONE CONTABILE</strong><br>
+        VAT 0% - Customer liable for VAT according to Art. 196 EU VAT Directive
+    </div>
+
+    <div class="invoice-details">
+        <div class="section">
+            <div class="section-title">Bill To:</div>
+            <strong>Digital Innovations SRL</strong><br>
+            Via Roma 456<br>
+            20121 Milano, Italy<br>
+            P.IVA: IT98765432109
+        </div>
+        <div class="section">
+            <div class="section-title">Invoice Details:</div>
+            <strong>Invoice #:</strong> INV-2024-RC-0456<br>
+            <strong>Date:</strong> January 18, 2024<br>
+            <strong>Due Date:</strong> February 17, 2024
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Software Development Services - Q4 2023</td>
+                <td class="text-right">1</td>
+                <td class="text-right">€12,000.00</td>
+                <td class="text-right">€12,000.00</td>
+            </tr>
+            <tr>
+                <td>System Architecture Consulting</td>
+                <td class="text-right">80</td>
+                <td class="text-right">€95.00</td>
+                <td class="text-right">€7,600.00</td>
+            </tr>
+            <tr>
+                <td>Technical Documentation</td>
+                <td class="text-right">1</td>
+                <td class="text-right">€1,900.00</td>
+                <td class="text-right">€1,900.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>€21,500.00</span>
+        </div>
+        <div class="total-row">
+            <span>VAT (0% - Reverse Charge):</span>
+            <span>€0.00</span>
+        </div>
+        <div class="total-row final">
+            <span>Total Amount:</span>
+            <span>€21,500.00</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Payment Terms:</strong> Net 30 days | <strong>Bank:</strong> Deutsche Bank, IBAN: DE89370400440532013000<br>
+        <strong>Important:</strong> Customer is required to self-assess and account for VAT in their country
+    </div>
+</body>
+</html>

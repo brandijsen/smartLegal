@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Fee - John Smith Consulting</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            border-bottom: 3px solid #059669;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .invoice-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #059669;
+            margin: 0;
+        }
+        .professional-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 30px;
+            float: right;
+            width: 350px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .total-row.negative {
+            color: #dc2626;
+        }
+        .total-row.final {
+            border-top: 2px solid #059669;
+            font-size: 18px;
+            font-weight: bold;
+            color: #059669;
+            padding-top: 12px;
+            margin-top: 8px;
+        }
+        .footer {
+            clear: both;
+            margin-top: 80px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="invoice-title">PROFESSIONAL FEE</h1>
+        <div class="professional-info">
+            <strong>Dr. Sarah Martinez - Business Consultant</strong><br>
+            789 Consultant Lane, Office 12<br>
+            London, W1A 1AA, United Kingdom<br>
+            Tax ID: GB987654321 | Professional License: BC-45678
+        </div>
+    </div>
+
+    <div class="invoice-details">
+        <div class="section">
+            <div class="section-title">Client:</div>
+            <strong>Innovate Startups Ltd</strong><br>
+            456 Innovation Street<br>
+            Manchester, M1 1AA, UK<br>
+            Company No: 12345678
+        </div>
+        <div class="section">
+            <div class="section-title">Fee Note Details:</div>
+            <strong>Fee Note #:</strong> FEE-2024-0312<br>
+            <strong>Date:</strong> January 20, 2024<br>
+            <strong>Period:</strong> January 2024
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Service Description</th>
+                <th class="text-right">Hours</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Strategic Business Planning & Analysis</td>
+                <td class="text-right">25</td>
+                <td class="text-right">£180.00</td>
+                <td class="text-right">£4,500.00</td>
+            </tr>
+            <tr>
+                <td>Market Research & Competitor Analysis</td>
+                <td class="text-right">15</td>
+                <td class="text-right">£180.00</td>
+                <td class="text-right">£2,700.00</td>
+            </tr>
+            <tr>
+                <td>Client Meetings & Presentations</td>
+                <td class="text-right">8</td>
+                <td class="text-right">£180.00</td>
+                <td class="text-right">£1,440.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Gross Fee:</span>
+            <span>£8,640.00</span>
+        </div>
+        <div class="total-row">
+            <span>VAT (20%):</span>
+            <span>£1,728.00</span>
+        </div>
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>£10,368.00</span>
+        </div>
+        <div class="total-row negative">
+            <span>- Withholding Tax (20%):</span>
+            <span>-£1,728.00</span>
+        </div>
+        <div class="total-row">
+            <span>+ Stamp Duty:</span>
+            <span>£2.00</span>
+        </div>
+        <div class="total-row final">
+            <span>Net Payable:</span>
+            <span>£8,642.00</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Payment Due:</strong> Within 14 days | <strong>Bank:</strong> Barclays UK, Sort Code: 20-00-00, Account: 12345678<br>
+        Withholding tax to be remitted to HMRC by client
+    </div>
+</body>
+</html>

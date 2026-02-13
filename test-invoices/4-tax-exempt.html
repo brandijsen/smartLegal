@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Exempt Invoice - HealthCare Plus</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            border-bottom: 3px solid #0891b2;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .invoice-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #0891b2;
+            margin: 0;
+        }
+        .company-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .tax-notice {
+            background-color: #dbeafe;
+            border-left: 4px solid #0891b2;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #0891b2;
+            margin-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 30px;
+            float: right;
+            width: 300px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .total-row.final {
+            border-top: 2px solid #0891b2;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0891b2;
+            padding-top: 12px;
+            margin-top: 8px;
+        }
+        .footer {
+            clear: both;
+            margin-top: 80px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="invoice-title">INVOICE</h1>
+        <div class="company-info">
+            <strong>HealthCare Plus Medical Center</strong><br>
+            321 Wellness Avenue<br>
+            Dublin 2, Ireland<br>
+            VAT Exemption: Medical Services (Art. 132 VAT Directive)<br>
+            Registration: IE9876543L
+        </div>
+    </div>
+
+    <div class="tax-notice">
+        <strong>ℹ️ VAT EXEMPT SERVICE</strong><br>
+        Medical and healthcare services are exempt from VAT under EU regulations
+    </div>
+
+    <div class="invoice-details">
+        <div class="section">
+            <div class="section-title">Patient/Client:</div>
+            <strong>Premium Health Insurance Ltd</strong><br>
+            789 Insurance Boulevard<br>
+            Dublin 4, Ireland<br>
+            Company Reg: IE123456
+        </div>
+        <div class="section">
+            <div class="section-title">Invoice Details:</div>
+            <strong>Invoice #:</strong> MED-2024-1847<br>
+            <strong>Date:</strong> January 22, 2024<br>
+            <strong>Service Period:</strong> Dec 2023
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Medical Service Description</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>General Consultation Services</td>
+                <td class="text-right">45</td>
+                <td class="text-right">€85.00</td>
+                <td class="text-right">€3,825.00</td>
+            </tr>
+            <tr>
+                <td>Diagnostic Testing & Lab Work</td>
+                <td class="text-right">28</td>
+                <td class="text-right">€120.00</td>
+                <td class="text-right">€3,360.00</td>
+            </tr>
+            <tr>
+                <td>Physical Therapy Sessions</td>
+                <td class="text-right">15</td>
+                <td class="text-right">€95.00</td>
+                <td class="text-right">€1,425.00</td>
+            </tr>
+            <tr>
+                <td>Medical Records Management</td>
+                <td class="text-right">1</td>
+                <td class="text-right">€450.00</td>
+                <td class="text-right">€450.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>€9,060.00</span>
+        </div>
+        <div class="total-row">
+            <span>VAT (Exempt):</span>
+            <span>€0.00</span>
+        </div>
+        <div class="total-row final">
+            <span>Total Amount:</span>
+            <span>€9,060.00</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Payment Terms:</strong> Due upon receipt | <strong>Bank:</strong> Allied Irish Bank, IBAN: IE29AIBK93115212345678<br>
+        Medical services provided under Healthcare License HC-2024-0456
+    </div>
+</body>
+</html>

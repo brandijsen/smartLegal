@@ -19,7 +19,7 @@ const createAccessToken = (user) =>
   jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1m" }
+    { expiresIn: "15m" }
   );
 
 const createRefreshToken = (user) =>
@@ -33,7 +33,7 @@ const setRefreshCookie = (res, token) => {
   res.cookie("refreshToken", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // true in produzione
+    secure: process.env.NODE_ENV === "production",
     maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 };
@@ -270,7 +270,7 @@ export const logout = async (req, res) => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
   });
 
   return res.json({ message: "Logged out successfully" });
