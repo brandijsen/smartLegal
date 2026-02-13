@@ -9,6 +9,7 @@ import {
   deleteDocument,
   getDocumentResult,
   getDocumentRaw,
+  downloadDocument,
   exportDocumentsCSV,
   exportDocumentsExcel
 } from "../controllers/document.controller.js";
@@ -21,6 +22,12 @@ router.get("/", protect, getUserDocuments);
 router.get("/export/csv", protect, exportDocumentsCSV);
 router.get("/export/excel", protect, exportDocumentsExcel);
 
+// Download route (PRIMA di /:id)
+router.get("/:id/download", protect, downloadDocument);
+router.get("/:id/result", protect, getDocumentResult);
+router.get("/:id/raw", protect, getDocumentRaw);
+
+// Route parametrica generica (DOPO le route specifiche)
 router.get("/:id", protect, getDocumentById);
 
 router.post(
@@ -33,8 +40,5 @@ router.post(
 router.post("/:id/retry", protect, retryDocument);
 
 router.delete("/:id", protect, deleteDocument);
-
-router.get("/:id/result", protect, getDocumentResult);
-router.get("/:id/raw", protect, getDocumentRaw);
 
 export default router;

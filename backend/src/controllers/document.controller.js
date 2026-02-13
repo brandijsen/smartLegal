@@ -215,6 +215,50 @@ export const getDocumentRaw = async (req, res) => {
 
 /*
 |--------------------------------------------------------------------------
+| DOWNLOAD PDF
+|--------------------------------------------------------------------------
+*/
+export const downloadDocument = async (req, res) => {
+  try {
+    const documentId = req.params.id;
+    const userId = req.user.id;
+
+    const document = await DocumentModel.findById(documentId, userId);
+
+    if (!document) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+
+    const filePath = path.join(
+      process.cwd(),
+      "src",
+      "uploads",
+      "users",
+      String(userId),
+      document.stored_name
+    );
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "PDF file not found on server" });
+    }
+
+    // Invia il file come download
+    res.download(filePath, document.original_name, (err) => {
+      if (err) {
+        console.error("Download error:", err);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Download failed" });
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Download failed:", err);
+    res.status(500).json({ message: "Download failed" });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
 | EXPORT DOCUMENTS CSV
 |--------------------------------------------------------------------------
 */

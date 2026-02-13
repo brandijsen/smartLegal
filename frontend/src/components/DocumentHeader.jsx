@@ -1,6 +1,10 @@
-import { FiFileText, FiCalendar, FiHash } from "react-icons/fi";
+import { FiFileText, FiCalendar, FiHash, FiDownload } from "react-icons/fi";
+import api from "../api/axios";
+import { useState } from "react";
 
 const DocumentHeader = ({ document, parsed }) => {
+  const [downloading, setDownloading] = useState(false);
+
   const formatDate = (dateString) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -20,6 +24,32 @@ const DocumentHeader = ({ document, parsed }) => {
     }
     if (type === "receipt") return "Receipt";
     return "Document";
+  };
+
+  const handleDownload = async () => {
+    if (!document?.id) return;
+    
+    setDownloading(true);
+    try {
+      const response = await api.get(`/documents/${document.id}/download`, {
+        responseType: "blob"
+      });
+
+      // Crea download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = window.document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", document.original_name);
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Download failed. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -47,22 +77,34 @@ const DocumentHeader = ({ document, parsed }) => {
           </div>
         </div>
 
-        {/* Status Badge */}
-        {document?.status && (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              document.status === "done"
-                ? "bg-emerald-100 text-emerald-700"
-                : document.status === "processing"
-                ? "bg-amber-100 text-amber-700"
-                : document.status === "failed"
-                ? "bg-red-100 text-red-700"
-                : "bg-slate-100 text-slate-700"
-            }`}
+        <div className="flex items-center gap-3">
+          {/* Download Button */}
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
-          </span>
-        )}
+            <FiDownload className="w-4 h-4" />
+            {downloading ? "Downloading..." : "Download PDF"}
+          </button>
+
+          {/* Status Badge */}
+          {document?.status && (
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                document.status === "done"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : document.status === "processing"
+                  ? "bg-amber-100 text-amber-700"
+                  : document.status === "failed"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-slate-100 text-slate-700"
+              }`}
+            >
+              {document.status.charAt(0).toUpperCase() + document.status.slice(1)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
