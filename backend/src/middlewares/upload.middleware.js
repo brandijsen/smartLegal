@@ -6,7 +6,7 @@ import crypto from "crypto";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userId = req.user.id;
-    const uploadPath = path.join("src/uploads/users", String(userId));
+    const uploadPath = path.join(process.cwd(), "src", "uploads", "users", String(userId));
 
     fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);

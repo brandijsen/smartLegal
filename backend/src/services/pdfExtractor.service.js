@@ -12,26 +12,45 @@ export const extractTextFromPdf = async (userId, storedName) => {
     storedName
   );
 
+  console.log(`📄 Extracting PDF: ${filePath}`);
 
   if (!fs.existsSync(filePath)) {
     throw new Error(`PDF not found: ${filePath}`);
   }
 
-  const data = new Uint8Array(fs.readFileSync(filePath));
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  try {
+    const dataBuffer = fs.readFileSync(filePath);
+    console.log(`📊 File size: ${dataBuffer.length} bytes`);
+    
+    const uint8Array = new Uint8Array(dataBuffer);
+    
+    console.log(`🔍 Loading PDF document...`);
+    const loadingTask = pdfjsLib.getDocument({
+      data: uint8Array,
+      useSystemFonts: true,
+      standardFontDataUrl: null,
+    });
+    
+    const pdfDocument = await loadingTask.promise;
+    const numPages = pdfDocument.numPages;
+    console.log(`📖 PDF has ${numPages} pages`);
+    
+    let fullText = "";
 
-  let fullText = "";
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      console.log(`📃 Processing page ${pageNum}/${numPages}...`);
+      const page = await pdfDocument.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(" ");
+      fullText += pageText + "\n";
+      console.log(`📝 Page ${pageNum} extracted: ${pageText.length} chars`);
+    }
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-
-    const pageText = content.items
-      .map(item => item.str)
-      .join(" ");
-
-    fullText += pageText + "\n";
+    console.log(`✅ Total text extracted: ${fullText.length} chars`);
+    return fullText.trim();
+  } catch (error) {
+    console.error(`❌ PDF extraction error for ${storedName}:`, error);
+    console.error(`Stack trace:`, error.stack);
+    throw new Error(`Failed to extract text from PDF: ${error.message}`);
   }
-
-  return fullText;
 };

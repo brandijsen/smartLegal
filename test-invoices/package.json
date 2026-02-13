@@ -1,0 +1,11 @@
+{
+  "name": "test-invoices-converter",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "convert": "node convert-to-pdf.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.11.1"
+  }
+}

@@ -4,12 +4,23 @@ import { uploadPDF } from "../middlewares/upload.middleware.js";
 import {
   uploadDocument,
   getUserDocuments,
-  getDocumentById, retryDocument, deleteDocument
+  getDocumentById,
+  retryDocument,
+  deleteDocument,
+  getDocumentResult,
+  getDocumentRaw,
+  exportDocumentsCSV,
+  exportDocumentsExcel
 } from "../controllers/document.controller.js";
 
 const router = express.Router();
 
 router.get("/", protect, getUserDocuments);
+
+// Export routes (prima delle route parametriche)
+router.get("/export/csv", protect, exportDocumentsCSV);
+router.get("/export/excel", protect, exportDocumentsExcel);
+
 router.get("/:id", protect, getDocumentById);
 
 router.post(
@@ -23,5 +34,7 @@ router.post("/:id/retry", protect, retryDocument);
 
 router.delete("/:id", protect, deleteDocument);
 
+router.get("/:id/result", protect, getDocumentResult);
+router.get("/:id/raw", protect, getDocumentRaw);
 
 export default router;

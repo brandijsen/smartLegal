@@ -14,5 +14,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  smartlegal_redis:
+    image: redis:7-alpine
+    container_name: smartlegal_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
 volumes:
   mysql_data:

@@ -1,13 +1,11 @@
-// src/components/ProtectedRoute.jsx
-import { useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
 
 const ProtectedRoute = ({ children }) => {
-  const { token } = useSelector((state) => state.auth);
   const location = useLocation();
 
-  // ❌ Non loggato → torna alla home e apri il modal login
-  if (!token) {
+  const storedToken = localStorage.getItem("accessToken");
+
+  if (!storedToken) {
     return (
       <Navigate
         to="/"

@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import DocumentUpload from "../components/DocumentUpload";
+import DocumentFilters from "../components/DocumentFilters";
+import { Link } from "react-router-dom";
+
 import {
   FiClock,
   FiLoader,
   FiCheckCircle,
-  FiXCircle
+  FiXCircle,
+  FiDownload
 } from "react-icons/fi";
 
 const STATUS_META = {
@@ -32,14 +37,57 @@ const STATUS_META = {
 };
 
 const Documents = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  
+  // Inizializza filtri dalla URL
+  const [filters, setFilters] = useState({
+    status: searchParams.get("status") || "all",
+    dateFrom: searchParams.get("dateFrom") || "",
+    dateTo: searchParams.get("dateTo") || "",
+    search: searchParams.get("search") || ""
+  });
+  
+  // Paginazione - inizializza dalla URL
+  const [pagination, setPagination] = useState({
+    page: parseInt(searchParams.get("page")) || 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (page = pagination.page, currentFilters = filters) => {
     try {
-      const res = await api.get("/documents");
-      setDocuments(res.data);
+      // Build query string
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString()
+      });
+
+      // Add filters
+      if (currentFilters.status && currentFilters.status !== "all") {
+        params.append("status", currentFilters.status);
+      }
+      if (currentFilters.dateFrom) {
+        params.append("dateFrom", currentFilters.dateFrom);
+      }
+      if (currentFilters.dateTo) {
+        params.append("dateTo", currentFilters.dateTo);
+      }
+      if (currentFilters.search) {
+        params.append("search", currentFilters.search);
+      }
+
+      const res = await api.get(`/documents?${params.toString()}`);
+      setDocuments(res.data.documents);
+      setPagination(res.data.pagination);
     } catch (err) {
       console.error("Failed to fetch documents", err);
     } finally {
@@ -74,20 +122,186 @@ const Documents = () => {
     }
   };
 
+  // Selezione multipla
+  const toggleSelect = (docId) => {
+    setSelectedIds((prev) =>
+      prev.includes(docId)
+        ? prev.filter((id) => id !== docId)
+        : [...prev, docId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === documents.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(documents.map((d) => d.id));
+    }
+  };
+
+  // Bulk delete
+  const bulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    if (!window.confirm(`Delete ${selectedIds.length} selected document(s)?`)) {
+      return;
+    }
+
+    setBulkProcessing(true);
+
+    try {
+      await Promise.all(
+        selectedIds.map((id) => api.delete(`/documents/${id}`))
+      );
+      setSelectedIds([]);
+      await fetchDocuments();
+    } catch (err) {
+      console.error("Bulk delete failed", err);
+      alert("Some documents could not be deleted");
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  // Bulk retry
+  const bulkRetry = async () => {
+    const failedSelected = selectedIds.filter((id) => {
+      const doc = documents.find((d) => d.id === id);
+      return doc?.status === "failed";
+    });
+
+    if (failedSelected.length === 0) {
+      alert("No failed documents selected");
+      return;
+    }
+
+    setBulkProcessing(true);
+
+    try {
+      await Promise.all(
+        failedSelected.map((id) => api.post(`/documents/${id}/retry`))
+      );
+      setSelectedIds([]);
+      await fetchDocuments();
+    } catch (err) {
+      console.error("Bulk retry failed", err);
+      alert("Some documents could not be retried");
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
   useEffect(() => {
     fetchDocuments();
-    const interval = setInterval(fetchDocuments, 5000);
+    const interval = setInterval(() => fetchDocuments(pagination.page, filters), 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pagination.page, filters]);
+
+  const goToPage = (page) => {
+    setSelectedIds([]);
+    updateURL({ page, ...filters });
+    fetchDocuments(page, filters);
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setSelectedIds([]);
+    updateURL({ page: 1, ...newFilters });
+    fetchDocuments(1, newFilters);
+  };
+
+  const handleResetFilters = () => {
+    const resetFilters = {
+      status: "all",
+      dateFrom: "",
+      dateTo: "",
+      search: ""
+    };
+    setFilters(resetFilters);
+    setSelectedIds([]);
+    updateURL({ page: 1, ...resetFilters });
+    fetchDocuments(1, resetFilters);
+  };
+
+  // Aggiorna URL con filtri e pagina corrente
+  const updateURL = ({ page, status, dateFrom, dateTo, search }) => {
+    const params = new URLSearchParams();
+    
+    if (page && page !== 1) params.set("page", page.toString());
+    if (status && status !== "all") params.set("status", status);
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
+    if (search) params.set("search", search);
+
+    setSearchParams(params);
+  };
+
+  // Export functions
+  const handleExport = async (format) => {
+    setExporting(true);
+    try {
+      const response = await api.get(`/documents/export/${format}`, {
+        responseType: "blob"
+      });
+
+      // Crea download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `documents-${Date.now()}.${format === "csv" ? "csv" : "xlsx"}`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const hasSelection = selectedIds.length > 0;
 
   return (
     <div className="pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-6xl mx-auto px-8 space-y-10">
-        <h1 className="text-3xl font-semibold">
-          Your documents
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-semibold">Your documents</h1>
+
+          {/* Export Buttons */}
+          {documents.length > 0 && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleExport("csv")}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FiDownload className="w-4 h-4" />
+                {exporting ? "Exporting..." : "Export CSV"}
+              </button>
+
+              <button
+                onClick={() => handleExport("excel")}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FiDownload className="w-4 h-4" />
+                {exporting ? "Exporting..." : "Export Excel"}
+              </button>
+            </div>
+          )}
+        </div>
 
         <DocumentUpload onUploaded={fetchDocuments} />
+
+        <DocumentFilters
+          onFilterChange={handleFilterChange}
+          onReset={handleResetFilters}
+        />
 
         {loading ? (
           <div className="text-slate-600">Loading documents…</div>
@@ -96,62 +310,174 @@ const Documents = () => {
             No documents uploaded yet.
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b">
-                <tr>
-                  <th className="text-left px-6 py-4 font-medium">File</th>
-                  <th className="text-left px-6 py-4 font-medium">Uploaded</th>
-                  <th className="text-left px-6 py-4 font-medium">Status</th>
-                  <th className="text-left px-6 py-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {documents.map((doc) => {
-                  const meta = STATUS_META[doc.status];
-                  return (
-                    <tr key={doc.id} className="border-b last:border-b-0">
-                      <td className="px-6 py-4">
-                        {doc.original_name}
-                      </td>
+          <>
+            {/* Bulk Actions Bar */}
+            {hasSelection && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-emerald-800">
+                  {selectedIds.length} document(s) selected
+                </span>
 
-                      <td className="px-6 py-4 text-slate-600">
-                        {new Date(doc.uploaded_at).toLocaleString()}
-                      </td>
+                <div className="flex gap-2">
+                  <button
+                    onClick={bulkRetry}
+                    disabled={bulkProcessing}
+                    className="px-4 py-2 rounded-md bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bulkProcessing ? "Processing…" : "🔁 Retry Failed"}
+                  </button>
 
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${meta.className}`}
-                        >
-                          {meta.icon}
-                          {meta.label}
-                        </span>
-                      </td>
+                  <button
+                    onClick={bulkDelete}
+                    disabled={bulkProcessing}
+                    className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bulkProcessing ? "Deleting…" : "🗑 Delete Selected"}
+                  </button>
 
-                      <td className="px-6 py-4">
-                        {doc.status === "failed" && (
-                          <button
-                            onClick={() => retryDocument(doc.id)}
-                            disabled={retryingId === doc.id}
-                            className="text-xs px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                  <button
+                    onClick={() => setSelectedIds([])}
+                    className="px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="px-6 py-4 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.length === documents.length && documents.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                    </th>
+                    <th className="text-left px-6 py-4 font-medium">File</th>
+                    <th className="text-left px-6 py-4 font-medium">Uploaded</th>
+                    <th className="text-left px-6 py-4 font-medium">Status</th>
+                    <th className="text-left px-6 py-4 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.map((doc) => {
+                    const meta = STATUS_META[doc.status];
+                    const isSelected = selectedIds.includes(doc.id);
+
+                    return (
+                      <tr
+                        key={doc.id}
+                        className={`border-b last:border-b-0 ${
+                          isSelected ? "bg-emerald-50" : "hover:bg-slate-50"
+                        }`}
+                      >
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(doc.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                          />
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <Link
+                            to={`/documents/${doc.id}`}
+                            className="text-emerald-600 hover:underline font-medium"
                           >
-                            {retryingId === doc.id ? "Retrying…" : "🔁 Retry"}
-                          </button>
-                        )}
+                            {doc.original_name}
+                          </Link>
+                        </td>
 
-                        <button
-                          onClick={() => deleteDocument(doc.id)}
-                          className="ml-2 text-xs px-3 py-1 rounded bg-slate-200 text-slate-800 hover:bg-slate-300"
-                        >
-                          🗑 Delete
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <td className="px-6 py-4 text-slate-600">
+                          {new Date(doc.uploaded_at).toLocaleString()}
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${meta.className}`}
+                          >
+                            {meta.icon}
+                            {meta.label}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {doc.status === "failed" && (
+                            <button
+                              onClick={() => retryDocument(doc.id)}
+                              disabled={retryingId === doc.id}
+                              className="text-xs px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                              {retryingId === doc.id ? "Retrying…" : "🔁 Retry"}
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => deleteDocument(doc.id)}
+                            className="ml-2 text-xs px-3 py-1 rounded bg-slate-200 text-slate-800 hover:bg-slate-300"
+                          >
+                            🗑 Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {pagination.totalPages > 1 && (
+              <div className="bg-white rounded-lg border border-slate-200 p-4 flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total documents)
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => goToPage(1)}
+                    disabled={!pagination.hasPrevPage}
+                    className="px-3 py-1 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    First
+                  </button>
+
+                  <button
+                    onClick={() => goToPage(pagination.page - 1)}
+                    disabled={!pagination.hasPrevPage}
+                    className="px-3 py-1 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+
+                  <span className="px-4 py-1 rounded-md bg-emerald-100 text-emerald-700 text-sm font-medium">
+                    {pagination.page}
+                  </span>
+
+                  <button
+                    onClick={() => goToPage(pagination.page + 1)}
+                    disabled={!pagination.hasNextPage}
+                    className="px-3 py-1 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+
+                  <button
+                    onClick={() => goToPage(pagination.totalPages)}
+                    disabled={!pagination.hasNextPage}
+                    className="px-3 py-1 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Last
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

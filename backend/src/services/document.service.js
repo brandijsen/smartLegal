@@ -9,8 +9,8 @@ export const DocumentService = {
     });
   },
 
-  async listUserDocuments(userId) {
-    return DocumentModel.findByUser(userId);
+  async listUserDocuments(userId, { page, limit, filters } = {}) {
+    return DocumentModel.findByUser(userId, { page, limit, filters });
   },
 
   async getDocumentById(documentId, userId) {

@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import documentRoutes from "./routes/document.routes.js";
 import "./config/redis.js";
 import { documentQueue } from "./queues/documentQueue.js";
+import "./queues/documentWorker.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
