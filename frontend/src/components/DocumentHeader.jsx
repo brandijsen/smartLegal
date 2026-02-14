@@ -1,8 +1,8 @@
-import { FiFileText, FiCalendar, FiHash, FiDownload } from "react-icons/fi";
+import { FiFileText, FiCalendar, FiHash, FiDownload, FiEdit2 } from "react-icons/fi";
 import api from "../api/axios";
 import { useState } from "react";
 
-const DocumentHeader = ({ document, parsed }) => {
+const DocumentHeader = ({ document, parsed, resultMetadata }) => {
   const [downloading, setDownloading] = useState(false);
 
   const formatDate = (dateString) => {
@@ -78,6 +78,14 @@ const DocumentHeader = ({ document, parsed }) => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Manually Edited Badge */}
+          {resultMetadata?.manually_edited && (
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+              <FiEdit2 className="w-3 h-3" />
+              Manually Edited
+            </span>
+          )}
+
           {/* Download Button */}
           <button
             onClick={handleDownload}

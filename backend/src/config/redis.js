@@ -1,5 +1,6 @@
 
 import IORedis from "ioredis";
+import logger from "../utils/logger.js";
 
 export const redisConnection = new IORedis({
   host: process.env.REDIS_HOST,
@@ -11,7 +12,12 @@ export const redisConnection = new IORedis({
 });
 
 redisConnection.ping().then(() => {
-  console.log("🟢 Redis connesso");
+  logger.info("Redis connected successfully");
 }).catch(err => {
-  console.error("🔴 Redis error", err);
+  logger.error("Redis connection failed", { 
+    error: err.message,
+    stack: err.stack,
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+  });
 });

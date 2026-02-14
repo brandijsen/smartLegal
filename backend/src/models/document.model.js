@@ -60,10 +60,19 @@ export const DocumentModel = {
       .map(clause => clause.replace(/^(user_id|status|uploaded_at|original_name)/, 'd.$1'))
       .join(" AND ");
 
-    // Query per i documenti paginati con JOIN per ricerca full-text
+    // Query per i documenti paginati con JOIN per ricerca full-text + metadata
     const [rows] = await pool.execute(
       `
-      SELECT DISTINCT d.id, d.original_name, d.status, d.uploaded_at, d.processed_at
+      SELECT DISTINCT 
+        d.id, 
+        d.original_name, 
+        d.status, 
+        d.uploaded_at, 
+        d.processed_at,
+        d.is_defective,
+        d.marked_defective_at,
+        dr.manually_edited,
+        dr.parsed_json
       FROM documents d
       LEFT JOIN document_results dr ON d.id = dr.document_id
       WHERE ${whereSQL}
@@ -107,7 +116,9 @@ async findById(documentId, userId) {
       stored_name,
       status,
       uploaded_at,
-      processed_at
+      processed_at,
+      is_defective,
+      marked_defective_at
     FROM documents
     WHERE id = ? AND user_id = ?
     `,
@@ -121,7 +132,7 @@ async findById(documentId, userId) {
 async findByIdForWorker(documentId) {
   const [rows] = await pool.execute(
     `
-    SELECT id, user_id, stored_name
+    SELECT id, user_id, stored_name, original_name
     FROM documents
     WHERE id = ?
     `,
@@ -141,6 +152,49 @@ async findByIdForWorker(documentId) {
       `,
       [status, status, id]
     );
+  },
+
+  async markAsDefective(documentId, userId) {
+    await pool.execute(
+      `
+      UPDATE documents
+      SET is_defective = 1,
+          marked_defective_at = NOW()
+      WHERE id = ? AND user_id = ?
+      `,
+      [documentId, userId]
+    );
+  },
+
+  async unmarkAsDefective(documentId, userId) {
+    await pool.execute(
+      `
+      UPDATE documents
+      SET is_defective = 0,
+          marked_defective_at = NULL
+      WHERE id = ? AND user_id = ?
+      `,
+      [documentId, userId]
+    );
+  },
+
+  async findDefectiveDocuments(userId) {
+    const [rows] = await pool.execute(
+      `
+      SELECT 
+        d.id,
+        d.original_name,
+        d.uploaded_at,
+        d.marked_defective_at,
+        dr.parsed_json
+      FROM documents d
+      LEFT JOIN document_results dr ON d.id = dr.document_id
+      WHERE d.user_id = ? AND d.is_defective = 1
+      ORDER BY d.marked_defective_at DESC
+      `,
+      [userId]
+    );
+    return rows;
   },
 
   async deleteById(documentId) {

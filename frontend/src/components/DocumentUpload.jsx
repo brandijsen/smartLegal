@@ -35,9 +35,12 @@ const DocumentUpload = ({ onUploaded }) => {
 
     setUploadQueue((prev) => [...prev, ...queueItems]);
 
-    // Carica i file uno alla volta
-    for (const item of queueItems) {
-      await uploadSingleFile(item);
+    // 🎯 BATCH UPLOAD: invia tutti i file insieme se multipli
+    if (pdfFiles.length > 1) {
+      await uploadBatchFiles(queueItems);
+    } else {
+      // Upload singolo (retrocompatibilità)
+      await uploadSingleFile(queueItems[0]);
     }
 
     // Refresh lista documenti dopo tutti gli upload
@@ -51,6 +54,89 @@ const DocumentUpload = ({ onUploaded }) => {
     }, 3000);
   };
 
+  // 🎯 NEW: Upload batch di file in una singola richiesta
+  const uploadBatchFiles = async (queueItems) => {
+    // Marca tutti come "uploading"
+    setUploadQueue((prev) =>
+      prev.map((q) =>
+        queueItems.find((i) => i.id === q.id)
+          ? { ...q, status: "uploading" }
+          : q
+      )
+    );
+
+    try {
+      const formData = new FormData();
+      
+      // Aggiungi tutti i file al FormData
+      queueItems.forEach((item) => {
+        formData.append("files", item.file);
+      });
+
+      const response = await api.post("/documents/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          // Aggiorna progress per tutti i file nel batch
+          setUploadQueue((prev) =>
+            prev.map((q) =>
+              queueItems.find((i) => i.id === q.id)
+                ? { ...q, progress }
+                : q
+            )
+          );
+        },
+      });
+
+      // Tutti i file uploadati con successo
+      setUploadQueue((prev) =>
+        prev.map((q) =>
+          queueItems.find((i) => i.id === q.id)
+            ? { ...q, status: "success", progress: 100 }
+            : q
+        )
+      );
+
+      console.log("✅ Batch upload completato:", response.data);
+    } catch (err) {
+      // 🛡️ Gestione Rate Limit (429)
+      if (err.response?.status === 429) {
+        const errorData = err.response?.data;
+        const retryAfter = errorData?.retryAfter || 30;
+        const errorMsg = errorData?.message || `Upload limit reached. Please wait ${retryAfter} seconds.`;
+        
+        setError(errorMsg);
+        
+        // Marca tutti come errore con messaggio specifico
+        setUploadQueue((prev) =>
+          prev.map((q) =>
+            queueItems.find((i) => i.id === q.id)
+              ? { ...q, status: "error", error: `Rate limit: Wait ${retryAfter}s` }
+              : q
+          )
+        );
+        
+        // Mantieni errore visibile per 5 secondi
+        setTimeout(() => setError(""), 5000);
+        
+        console.error("🛡️ Rate limit exceeded:", errorMsg);
+        return;
+      }
+      
+      // Errore generico batch
+      setUploadQueue((prev) =>
+        prev.map((q) =>
+          queueItems.find((i) => i.id === q.id)
+            ? { ...q, status: "error", error: "Batch upload failed" }
+            : q
+        )
+      );
+      console.error("❌ Batch upload failed:", err);
+    }
+  };
+
   const uploadSingleFile = async (queueItem) => {
     // Aggiorna stato a "uploading"
     setUploadQueue((prev) =>
@@ -61,7 +147,7 @@ const DocumentUpload = ({ onUploaded }) => {
 
     try {
       const formData = new FormData();
-      formData.append("file", queueItem.file);
+      formData.append("files", queueItem.file); // Usa "files" per coerenza con batch
 
       await api.post("/documents/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -84,7 +170,30 @@ const DocumentUpload = ({ onUploaded }) => {
         )
       );
     } catch (err) {
-      // Errore
+      // 🛡️ Gestione Rate Limit (429)
+      if (err.response?.status === 429) {
+        const errorData = err.response?.data;
+        const retryAfter = errorData?.retryAfter || 30;
+        const errorMsg = errorData?.message || `Upload limit reached. Please wait ${retryAfter} seconds.`;
+        
+        setError(errorMsg);
+        
+        setUploadQueue((prev) =>
+          prev.map((q) =>
+            q.id === queueItem.id
+              ? { ...q, status: "error", error: `Rate limit: Wait ${retryAfter}s` }
+              : q
+          )
+        );
+        
+        // Mantieni errore visibile per 5 secondi
+        setTimeout(() => setError(""), 5000);
+        
+        console.error("🛡️ Rate limit exceeded:", errorMsg);
+        return;
+      }
+      
+      // Errore generico
       setUploadQueue((prev) =>
         prev.map((q) =>
           q.id === queueItem.id

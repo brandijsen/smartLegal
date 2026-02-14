@@ -5,6 +5,8 @@ import { User } from "../models/user.model.js";
 import { transporter } from "../config/email.js";
 import { pool } from "../config/db.js";
 import { OAuth2Client } from "google-auth-library";
+import { logAuth, logError } from "../utils/logger.js";
+import { getRequestLogger } from "../middlewares/logger.middleware.js";
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -42,11 +44,14 @@ const setRefreshCookie = (res, token) => {
 // REGISTER (NO refresh token)
 // ───────────────────────────────────────────────
 export const register = async (req, res) => {
+  const log = getRequestLogger(req);
+  
   try {
     const { name, email, password } = req.body;
 
     const exists = await User.findByEmail(email);
     if (exists) {
+      log.warn("Registration attempted with existing email", { email });
       return res.status(400).json({ message: "Email already used" });
     }
 
@@ -62,6 +67,8 @@ export const register = async (req, res) => {
 
     const accessToken = createAccessToken(user);
 
+    logAuth("user_registered", { userId: user.id, email: user.email });
+
     return res.json({
       accessToken,
       user: {
@@ -73,6 +80,7 @@ export const register = async (req, res) => {
       },
     });
   } catch (err) {
+    logError(err, { operation: "register", email: req.body?.email });
     return res.status(500).json({ message: err.message });
   }
 };
@@ -81,16 +89,20 @@ export const register = async (req, res) => {
 // LOGIN
 // ───────────────────────────────────────────────
 export const login = async (req, res) => {
+  const log = getRequestLogger(req);
+  
   try {
     const { email, password } = req.body;
 
     const user = await User.findByEmail(email);
     if (!user) {
+      log.warn("Login attempted with non-existent email", { email });
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) {
+      log.warn("Login attempted with wrong password", { email, userId: user.id });
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
@@ -98,6 +110,8 @@ export const login = async (req, res) => {
     const refreshToken = createRefreshToken(user);
 
     setRefreshCookie(res, refreshToken);
+
+    logAuth("user_logged_in", { userId: user.id, email: user.email });
 
     return res.json({
       accessToken,
@@ -110,6 +124,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (err) {
+    logError(err, { operation: "login", email: req.body?.email });
     return res.status(500).json({ message: err.message });
   }
 };
@@ -118,9 +133,12 @@ export const login = async (req, res) => {
 // REFRESH
 // ───────────────────────────────────────────────
 export const refresh = async (req, res) => {
+  const log = getRequestLogger(req);
+  
   try {
     const token = req.cookies?.refreshToken;
     if (!token) {
+      log.warn("Token refresh attempted without refresh token");
       return res.status(401).json({ message: "No refresh token" });
     }
 
@@ -128,12 +146,17 @@ export const refresh = async (req, res) => {
     const user = await User.findById(decoded.id);
 
     if (!user) {
+      log.warn("Token refresh attempted with invalid user", { userId: decoded.id });
       return res.status(401).json({ message: "User not found" });
     }
 
     const accessToken = createAccessToken(user);
+    
+    logAuth("token_refreshed", { userId: user.id });
+    
     return res.json({ accessToken });
   } catch (err) {
+    logError(err, { operation: "refresh" });
     return res.status(401).json({ message: "Invalid refresh token" });
   }
 };
@@ -149,10 +172,13 @@ export const me = async (req, res) => {
 // SEND VERIFICATION EMAIL
 // ───────────────────────────────────────────────
 export const sendVerificationEmail = async (req, res) => {
+  const log = getRequestLogger(req);
+  
   try {
     const user = req.user;
 
     if (user.verified) {
+      log.warn("Verification email requested for already verified user", { userId: user.id });
       return res.status(400).json({ message: "Already verified" });
     }
 
@@ -171,8 +197,11 @@ export const sendVerificationEmail = async (req, res) => {
       html: `<a href="${link}">Verify your account</a>`,
     });
 
+    logAuth("verification_email_sent", { userId: user.id, email: user.email });
+
     return res.json({ message: "Verification email sent" });
   } catch (err) {
+    logError(err, { operation: "sendVerificationEmail", userId: req.user?.id });
     return res.status(500).json({ message: err.message });
   }
 };
@@ -191,6 +220,7 @@ export const verify = async (req, res) => {
 
     const user = rows[0];
     if (!user) {
+      logAuth("email_verification_failed", { reason: "invalid_token" });
       return res.redirect(`${process.env.FRONTEND_URL}/verify/error`);
     }
 
@@ -200,10 +230,13 @@ export const verify = async (req, res) => {
     const refreshToken = createRefreshToken(user);
     setRefreshCookie(res, refreshToken);
 
+    logAuth("email_verified", { userId: user.id, email: user.email });
+
     return res.redirect(
       `${process.env.FRONTEND_URL}/verify/success?token=${accessToken}`
     );
-  } catch {
+  } catch (err) {
+    logError(err, { operation: "verify", token: req.params?.token });
     return res.redirect(`${process.env.FRONTEND_URL}/verify/error`);
   }
 };
@@ -212,7 +245,7 @@ export const verify = async (req, res) => {
 // GOOGLE AUTH
 // ───────────────────────────────────────────────
 export const googleAuth = async (req, res) => {
-  const redirect = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=email profile&access_type=offline`;
+  const redirect = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=email profile&access_type=offline&prompt=select_account`;
   return res.redirect(redirect);
 };
 
@@ -248,6 +281,10 @@ export const googleCallback = async (req, res) => {
       });
 
       await User.verifyUser(user.id);
+      
+      logAuth("google_user_created", { userId: user.id, email });
+    } else {
+      logAuth("google_login", { userId: user.id, email });
     }
 
     const accessToken = createAccessToken(user);
@@ -258,7 +295,7 @@ export const googleCallback = async (req, res) => {
       `${process.env.GOOGLE_FRONTEND_REDIRECT}?token=${accessToken}`
     );
   } catch (err) {
-    console.error("GOOGLE LOGIN ERROR:", err);
+    logError(err, { operation: "googleCallback" });
     return res.redirect(`${process.env.FRONTEND_URL}/login?error=google`);
   }
 };
@@ -267,6 +304,8 @@ export const googleCallback = async (req, res) => {
 // LOGOUT
 // ───────────────────────────────────────────────
 export const logout = async (req, res) => {
+  logAuth("user_logged_out", { userId: req.user?.id });
+  
   res.clearCookie("refreshToken", {
     httpOnly: true,
     sameSite: "lax",
@@ -285,6 +324,7 @@ export const forgotPassword = async (req, res) => {
     const user = await User.findByEmail(email);
 
     if (!user) {
+      logAuth("password_reset_requested_invalid_email", { email });
       return res.json({ message: "If the email exists, a reset link was sent." });
     }
 
@@ -304,8 +344,11 @@ export const forgotPassword = async (req, res) => {
       html: `<a href="${link}">Reset your password</a>`,
     });
 
+    logAuth("password_reset_email_sent", { userId: user.id, email });
+
     return res.json({ message: "If the email exists, a reset link was sent." });
   } catch (err) {
+    logError(err, { operation: "forgotPassword", email: req.body?.email });
     return res.status(500).json({ message: err.message });
   }
 };
@@ -322,6 +365,7 @@ export const resetPassword = async (req, res) => {
 
     const user = rows[0];
     if (!user) {
+      logAuth("password_reset_failed", { reason: "invalid_or_expired_token" });
       return res.status(400).json({ message: "Invalid or expired token" });
     }
 
@@ -336,11 +380,14 @@ export const resetPassword = async (req, res) => {
     const refreshToken = createRefreshToken(user);
     setRefreshCookie(res, refreshToken);
 
+    logAuth("password_reset_completed", { userId: user.id, email: user.email });
+
     return res.json({
       accessToken,
       user: { id: user.id, role: user.role },
     });
   } catch (err) {
+    logError(err, { operation: "resetPassword" });
     return res.status(500).json({ message: err.message });
   }
 };

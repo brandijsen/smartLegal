@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Fattura Test Critical Error (100x OCR Error)</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+        .amount-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; }
+        .amount-row.total { font-weight: bold; font-size: 1.2em; border-top: 2px solid #333; margin-top: 10px; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FATTURA STANDARD</h1>
+        <p>N° 123/2024</p>
+        <p>Data: 20 Gennaio 2024</p>
+    </div>
+
+    <!-- 
+    ⚠️ CRITICAL ERROR SIMULATION: OCR 100x multiplier bug
+    
+    Real values:
+    - Subtotal: €1,000.00
+    - VAT 22%: €220.00
+    - Total: €1,220.00
+    
+    OCR extracted (with 100x error):
+    - Subtotal: €1,000.00 ✅
+    - VAT 22%: €220.00 ✅
+    - Total: €122,000.00 ❌ CRITICAL (100x error)
+    
+    This should trigger: "Total seems too high (>200% of subtotal)"
+    -->
+
+    <h3>Importi</h3>
+    
+    <div class="amount-row">
+        <span>Imponibile</span>
+        <span>€ 1.000,00</span>
+    </div>
+    
+    <div class="amount-row">
+        <span>IVA 22%</span>
+        <span>€ 220,00</span>
+    </div>
+    
+    <div class="amount-row total">
+        <span>TOTALE FATTURA</span>
+        <span>€ 122.000,00</span>
+    </div>
+</body>
+</html>

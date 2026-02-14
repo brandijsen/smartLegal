@@ -1,9 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import VerificationBanner from "./components/VerificationBanner";
 import ResetSuccessBanner from "./components/ResetSuccessBanner";
 
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 import VerifySuccess from "./pages/VerifySuccess";
 import VerifyError from "./pages/VerifyError";
 import GoogleSuccess from "./pages/GoogleSuccess";
@@ -28,7 +29,7 @@ function App() {
       <div className="pt-24">
         <Routes>
 
-          {/* HOME */}
+          {/* HOME (public) */}
           <Route
             path="/"
             element={
@@ -38,27 +39,40 @@ function App() {
             }
           />
 
+          {/* DASHBOARD (default after login) */}
           <Route
-  path="/documents"
-  element={
-    <PersistLogin>
-      <ProtectedRoute>
-        <Documents />
-      </ProtectedRoute>
-    </PersistLogin>
-  }
-/>
+            path="/dashboard"
+            element={
+              <PersistLogin>
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              </PersistLogin>
+            }
+          />
 
-<Route
-  path="/documents/:id"
-  element={
-    <PersistLogin>
-      <ProtectedRoute>
-        <DocumentDetail />
-      </ProtectedRoute>
-    </PersistLogin>
-  }
-/>
+          {/* DOCUMENTS */}
+          <Route
+            path="/documents"
+            element={
+              <PersistLogin>
+                <ProtectedRoute>
+                  <Documents />
+                </ProtectedRoute>
+              </PersistLogin>
+            }
+          />
+
+          <Route
+            path="/documents/:id"
+            element={
+              <PersistLogin>
+                <ProtectedRoute>
+                  <DocumentDetail />
+                </ProtectedRoute>
+              </PersistLogin>
+            }
+          />
 
           {/* GOOGLE */}
           <Route

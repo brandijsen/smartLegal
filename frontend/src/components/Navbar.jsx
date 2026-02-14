@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../store/authSlice";
 import AuthModal from "./AuthModal";
 import { FiShield, FiLogOut } from "react-icons/fi";
@@ -10,6 +10,13 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const { user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/"); // Redirect to home after logout
+    setProfileOpen(false);
+  };
 
   return (
     <>
@@ -30,9 +37,14 @@ const Navbar = () => {
               Home
             </Link>
             {user && (
-              <Link to="/documents" className="opacity-90 hover:opacity-100">
-                Documents
-              </Link>
+              <>
+                <Link to="/dashboard" className="opacity-90 hover:opacity-100">
+                  Dashboard
+                </Link>
+                <Link to="/documents" className="opacity-90 hover:opacity-100">
+                  Documents
+                </Link>
+              </>
             )}
             {user?.role === "admin" && (
               <Link to="/admin" className="flex items-center gap-1 opacity-90 hover:opacity-100">
@@ -61,7 +73,7 @@ const Navbar = () => {
               {profileOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow">
                   <button
-                    onClick={() => dispatch(logout())}
+                    onClick={handleLogout}
                     className="w-full px-4 py-2 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800"
                   >
                     <FiLogOut size={14} /> Logout

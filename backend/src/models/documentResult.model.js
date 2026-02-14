@@ -24,9 +24,23 @@ export const DocumentResultModel = {
     );
   },
 
+  async updateParsedJsonManually(documentId, parsedJson, userId) {
+    await pool.execute(
+      `
+      UPDATE document_results
+      SET parsed_json = ?,
+          manually_edited = 1,
+          edited_at = NOW(),
+          edited_by = ?
+      WHERE document_id = ?
+      `,
+      [JSON.stringify(parsedJson), userId, documentId]
+    );
+  },
+
   async findParsedByDocumentId(documentId) {
     const [rows] = await pool.execute(
-      `SELECT parsed_json FROM document_results WHERE document_id = ?`,
+      `SELECT parsed_json, manually_edited, edited_at FROM document_results WHERE document_id = ?`,
       [documentId]
     );
     return rows[0];

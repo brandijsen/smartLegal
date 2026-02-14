@@ -4,13 +4,16 @@ import api from "../api/axios";
 import DocumentUpload from "../components/DocumentUpload";
 import DocumentFilters from "../components/DocumentFilters";
 import { Link } from "react-router-dom";
+import { hasRedFlags } from "../utils/redFlagChecker";
 
 import {
   FiClock,
   FiLoader,
   FiCheckCircle,
   FiXCircle,
-  FiDownload
+  FiDownload,
+  FiAlertTriangle,
+  FiEdit2
 } from "react-icons/fi";
 
 const STATUS_META = {
@@ -360,6 +363,7 @@ const Documents = () => {
                     <th className="text-left px-6 py-4 font-medium">File</th>
                     <th className="text-left px-6 py-4 font-medium">Uploaded</th>
                     <th className="text-left px-6 py-4 font-medium">Status</th>
+                    <th className="text-left px-6 py-4 font-medium">Badges</th>
                     <th className="text-left px-6 py-4 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -367,6 +371,13 @@ const Documents = () => {
                   {documents.map((doc) => {
                     const meta = STATUS_META[doc.status];
                     const isSelected = selectedIds.includes(doc.id);
+                    
+                    // Check for red flags and manual edit
+                    const parsed = doc.parsed_json ? 
+                      (typeof doc.parsed_json === 'string' ? JSON.parse(doc.parsed_json) : doc.parsed_json) 
+                      : null;
+                    const hasFlags = parsed && hasRedFlags(parsed);
+                    const isManuallyEdited = doc.manually_edited === 1;
 
                     return (
                       <tr
@@ -387,7 +398,7 @@ const Documents = () => {
                         <td className="px-6 py-4">
                           <Link
                             to={`/documents/${doc.id}`}
-                            className="text-emerald-600 hover:underline font-medium"
+                            className="text-emerald-600 hover:underline font-medium block"
                           >
                             {doc.original_name}
                           </Link>
@@ -404,6 +415,35 @@ const Documents = () => {
                             {meta.icon}
                             {meta.label}
                           </span>
+                        </td>
+
+                        {/* Badges Column */}
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1.5">
+                            {/* 🚨 NEW: Badge per documento NON-fattura */}
+                            {parsed?.document_type && parsed.document_type !== 'invoice' && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200 w-fit">
+                                <FiXCircle className="w-3 h-3" />
+                                Not Invoice ({parsed.document_type})
+                              </span>
+                            )}
+                            
+                            {doc.is_defective === 1 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200 w-fit">
+                                <FiXCircle className="w-3 h-3" />
+                                Defective
+                              </span>
+                            )}
+                            {hasFlags && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200 w-fit">
+                                <FiAlertTriangle className="w-3 h-3" />
+                                Review
+                              </span>
+                            )}
+                            {!doc.is_defective && !hasFlags && doc.status === 'done' && parsed?.document_type === 'invoice' && (
+                              <span className="text-xs text-slate-400">—</span>
+                            )}
+                          </div>
                         </td>
 
                         <td className="px-6 py-4">

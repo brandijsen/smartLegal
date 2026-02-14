@@ -2,7 +2,7 @@ CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
-password VARCHAR(255) NULL,
+  password VARCHAR(255) NULL,
   role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
 
   verified TINYINT(1) NOT NULL DEFAULT 0,
@@ -27,6 +27,9 @@ CREATE TABLE documents (
   status ENUM('pending', 'processing', 'done', 'failed') 
     NOT NULL DEFAULT 'pending',
 
+  is_defective TINYINT(1) NOT NULL DEFAULT 0,
+  marked_defective_at TIMESTAMP NULL DEFAULT NULL,
+
   uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   processed_at TIMESTAMP NULL DEFAULT NULL,
 
@@ -37,7 +40,8 @@ CREATE TABLE documents (
 
   INDEX idx_documents_user (user_id),
   INDEX idx_documents_status (status),
-  INDEX idx_documents_uploaded (uploaded_at)
+  INDEX idx_documents_uploaded (uploaded_at),
+  INDEX idx_documents_defective (is_defective)
 );
 
 
@@ -49,6 +53,10 @@ CREATE TABLE document_results (
   raw_text LONGTEXT NOT NULL,
   parsed_json JSON NULL,
 
+  manually_edited TINYINT(1) NOT NULL DEFAULT 0,
+  edited_at TIMESTAMP NULL DEFAULT NULL,
+  edited_by INT NULL DEFAULT NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_results_document
@@ -56,7 +64,13 @@ CREATE TABLE document_results (
     REFERENCES documents(id)
     ON DELETE CASCADE,
 
-  UNIQUE KEY uk_document_result (document_id)
+  CONSTRAINT fk_results_edited_by 
+    FOREIGN KEY (edited_by) 
+    REFERENCES users(id) 
+    ON DELETE SET NULL,
+
+  UNIQUE KEY uk_document_result (document_id),
+  INDEX idx_manually_edited (manually_edited)
 );
 
 

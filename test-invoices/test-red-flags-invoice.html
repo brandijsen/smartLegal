@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fattura Problematica - Test Red Flags</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .company-info {
+            margin: 20px 0;
+        }
+        
+        .invoice-details {
+            margin: 30px 0;
+            background: #f9f9f9;
+            padding: 15px;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .items-table th,
+        .items-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .items-table th {
+            background-color: #333;
+            color: white;
+        }
+        
+        .totals {
+            margin-top: 30px;
+            float: right;
+            width: 300px;
+        }
+        
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .totals-row.total {
+            font-weight: bold;
+            font-size: 1.2em;
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            margin-top: 10px;
+        }
+        
+        /* Difetti intenzionali */
+        .blurred {
+            filter: blur(0.5px);
+            opacity: 0.85;
+        }
+        
+        .faded {
+            opacity: 0.6;
+        }
+        
+        .unclear {
+            letter-spacing: 2px;
+            font-size: 0.9em;
+        }
+        
+        .rotated {
+            display: inline-block;
+            transform: rotate(-1deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FATTURA N. <span class="faded">2024/00</span>87</h1>
+        <p class="unclear">Data: 14 Febbraio 2026</p>
+    </div>
+
+    <div class="company-info">
+        <h3>Fornitore:</h3>
+        <p><strong>Tech Solutions S.r.l.</strong></p>
+        <p>Via Roma 123, Milano</p>
+        <p>P.IVA: IT12345678901</p>
+    </div>
+
+    <div class="company-info">
+        <h3>Cliente:</h3>
+        <p><strong>ABC Company Ltd</strong></p>
+        <p>Via Verdi 456, Roma</p>
+        <p class="faded">P.IVA: IT98765432109</p>
+    </div>
+
+    <div class="invoice-details">
+        <p><strong>Tipo documento:</strong> Fattura Professionale</p>
+        <p><strong>Pagamento:</strong> Bonifico bancario 30gg</p>
+        <p class="blurred"><strong>Riferimento:</strong> Contratto CNS-2024-003</p>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Descrizione</th>
+                <th>Quantità</th>
+                <th>Prezzo Unit.</th>
+                <th>Totale</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Consulenza tecnica - Analisi sistemi</td>
+                <td>40 ore</td>
+                <td class="rotated">€ 85,00</td>
+                <td>€ 3.400,00</td>
+            </tr>
+            <tr>
+                <td class="blurred">Sviluppo software personalizzato</td>
+                <td>60 ore</td>
+                <td>€ 95,00</td>
+                <td class="unclear">€ 5.7OO,00</td>
+            </tr>
+            <tr>
+                <td>Formazione personale (2 giornate)</td>
+                <td class="faded">16 ore</td>
+                <td>€ 75,00</td>
+                <td>€ 1.200,00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="totals-row">
+            <span>Imponibile:</span>
+            <span>€ 10.300,00</span>
+        </div>
+        <div class="totals-row blurred">
+            <span>IVA 22%:</span>
+            <span>€ 2.266,00</span>
+        </div>
+        <div class="totals-row faded">
+            <span>Ritenuta d'acconto (20%):</span>
+            <span>- € 2.060,00</span>
+        </div>
+        <div class="totals-row unclear">
+            <span>Marca da bollo (€ 2.00):</span>
+            <span>€ 2,00</span>
+        </div>
+        <div class="totals-row total">
+            <span>Totale da pagare:</span>
+            <span class="rotated">€ 10.508,00</span>
+        </div>
+    </div>
+
+    <div style="clear: both; margin-top: 80px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <p style="font-size: 0.9em; color: #666;">
+            <strong>Note:</strong> Pagamento entro 30 giorni data fattura.
+        </p>
+        <p style="font-size: 0.85em; color: #666;" class="faded">
+            La presente fattura è soggetta a ritenuta d'acconto del 20% ai sensi dell'art. 25 DPR 600/73.
+        </p>
+        <p style="font-size: 0.85em; color: #666;" class="blurred">
+            Operazione effettuata ai sensi dell'art. 1, comma 54-89, Legge n. 190/2014
+        </p>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center; font-size: 0.8em; color: #999;">
+        <p>Tech Solutions S.r.l. - Sede Legale: Via Roma 123, 20100 Milano (MI)</p>
+        <p class="unclear">Cap. Soc. € 10.000 i.v. - REA MI-1234567 - CF/P.IVA: IT12345678901</p>
+    </div>
+</body>
+</html>
