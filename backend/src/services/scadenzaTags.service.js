@@ -96,12 +96,23 @@ async function ensureDueTags(userId) {
   for (const def of DUE_TAG_DEFS) {
     let tag = byName[def.name];
     if (!tag) {
-      tag = await TagModel.create({
-        userId: uid,
-        name: def.name,
-        color: def.color
-      });
-      logger.info("Created due tag", { userId: uid, tagId: tag.id, name: def.name });
+      try {
+        tag = await TagModel.create({
+          userId: uid,
+          name: def.name,
+          color: def.color
+        });
+        logger.info("Created due tag", { userId: uid, tagId: tag.id, name: def.name });
+      } catch (err) {
+        if (err.code === "ER_DUP_ENTRY" || err.errno === 1062) {
+          const refreshed = await TagModel.findByUser(uid, { limit: 500 });
+          tag = refreshed.find((t) => t.name === def.name);
+          if (!tag) throw err;
+        } else {
+          throw err;
+        }
+      }
+      byName[def.name] = tag;
     }
     const tid = parseInt(tag.id, 10);
     if (!isNaN(tid)) result[def.key] = tid;

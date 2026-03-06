@@ -7,12 +7,13 @@
 -- -----------------------------------------------------------------------------
 -- Users
 -- -----------------------------------------------------------------------------
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
+  avatar_path VARCHAR(255) NULL,
+
   password VARCHAR(255) NULL,
-  role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
 
   verified TINYINT(1) NOT NULL DEFAULT 0,
   verification_token VARCHAR(255) DEFAULT NULL,
@@ -28,7 +29,7 @@ CREATE TABLE users (
 -- -----------------------------------------------------------------------------
 -- Documents
 -- -----------------------------------------------------------------------------
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   user_id INT NOT NULL,
@@ -60,7 +61,7 @@ CREATE TABLE documents (
 -- -----------------------------------------------------------------------------
 -- Document Results
 -- -----------------------------------------------------------------------------
-CREATE TABLE document_results (
+CREATE TABLE IF NOT EXISTS document_results (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   document_id INT NOT NULL,
@@ -92,7 +93,7 @@ CREATE TABLE document_results (
 -- -----------------------------------------------------------------------------
 -- Processing Stats
 -- -----------------------------------------------------------------------------
-CREATE TABLE processing_stats (
+CREATE TABLE IF NOT EXISTS processing_stats (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   stat_date DATE NOT NULL UNIQUE,
@@ -108,7 +109,7 @@ CREATE TABLE processing_stats (
 -- -----------------------------------------------------------------------------
 -- Suppliers
 -- -----------------------------------------------------------------------------
-CREATE TABLE suppliers (
+CREATE TABLE IF NOT EXISTS suppliers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
 
@@ -130,20 +131,11 @@ CREATE TABLE suppliers (
   INDEX idx_suppliers_name (user_id, name(100))
 );
 
--- Link document -> supplier
-ALTER TABLE documents
-  ADD COLUMN supplier_id INT NULL AFTER marked_defective_at,
-  ADD CONSTRAINT fk_documents_supplier
-    FOREIGN KEY (supplier_id)
-    REFERENCES suppliers(id)
-    ON DELETE SET NULL,
-  ADD INDEX idx_documents_supplier (supplier_id);
-
-
+-- Link document -> supplier (migration handles existing DB)
 -- -----------------------------------------------------------------------------
 -- Tags
 -- -----------------------------------------------------------------------------
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS tags (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
 
@@ -161,7 +153,7 @@ CREATE TABLE tags (
   INDEX idx_tags_user (user_id)
 );
 
-CREATE TABLE document_tags (
+CREATE TABLE IF NOT EXISTS document_tags (
   document_id INT NOT NULL,
   tag_id INT NOT NULL,
 
@@ -182,6 +174,31 @@ CREATE TABLE document_tags (
 
 
 -- =============================================================================
+-- MIGRATIONS: DB esistente (idempotente, sicuro anche su fresh install)
+-- =============================================================================
+DELIMITER //
+CREATE PROCEDURE _migrate_smartlegal()
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND COLUMN_NAME = 'supplier_id') THEN
+    ALTER TABLE documents ADD COLUMN supplier_id INT NULL AFTER marked_defective_at;
+    ALTER TABLE documents ADD CONSTRAINT fk_documents_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL;
+    ALTER TABLE documents ADD INDEX idx_documents_supplier (supplier_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'avatar_path') THEN
+    ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) NULL AFTER email;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role') THEN
+    SET @sql = 'ALTER TABLE users DROP COLUMN role';
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END IF;
+END //
+DELIMITER ;
+CALL _migrate_smartlegal();
+DROP PROCEDURE _migrate_smartlegal;
+
+-- =============================================================================
 -- LEGACY: Migrazione da vendors a suppliers
 -- =============================================================================
 -- Eseguire SOLO se avete già una tabella vendors e volete migrare a suppliers.
@@ -191,7 +208,7 @@ CREATE TABLE document_tags (
 --    ALTER TABLE documents DROP FOREIGN KEY fk_documents_vendor;
 --
 -- 2. Crea suppliers, copia dati, elimina vendors
---    CREATE TABLE suppliers (...);
+--    CREATE TABLE IF NOT EXISTS suppliers (...);
 --    INSERT INTO suppliers SELECT * FROM vendors;
 --    DROP TABLE vendors;
 --

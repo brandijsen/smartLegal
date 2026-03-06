@@ -336,6 +336,97 @@ const getErrorEmailTemplate = (userName, documentName, documentId, errorMessage)
 };
 
 /**
+ * Template HTML per notifica modifica profilo
+ */
+const getProfileUpdatedTemplate = (userName, changesSummary) => {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
+  <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <h2 style="color: #059669; margin-top: 0;">Profilo aggiornato</h2>
+    <p>Ciao ${userName},</p>
+    <p>Il tuo profilo DocuExtract è stato modificato con successo.</p>
+    ${changesSummary ? `<p style="background: #f0fdf4; padding: 12px; border-radius: 8px; border-left: 4px solid #059669;">${changesSummary}</p>` : ""}
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">Se non sei stato tu a effettuare questa modifica, contatta subito il supporto.</p>
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">DocuExtract – notifica automatica</p>
+  </div>
+</body>
+</html>`;
+};
+
+/**
+ * Template HTML per notifica cambio password
+ */
+const getPasswordChangedTemplate = (userName) => {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
+  <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <h2 style="color: #059669; margin-top: 0;">Password modificata</h2>
+    <p>Ciao ${userName},</p>
+    <p>La password del tuo account DocuExtract è stata modificata con successo.</p>
+    <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #dc2626; color: #991b1b;">
+      Se non hai effettuato tu questa modifica, qualcuno potrebbe aver avuto accesso al tuo account. Cambia subito la password e contatta il supporto.
+    </p>
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">DocuExtract – notifica automatica</p>
+  </div>
+</body>
+</html>`;
+};
+
+/**
+ * Invia email quando il profilo utente viene aggiornato
+ */
+export async function sendProfileUpdatedEmail(userEmail, userName, changesSummary = null) {
+  try {
+    const mailOptions = {
+      from: `"DocuExtract" <${process.env.EMAIL_FROM}>`,
+      to: userEmail,
+      subject: "Profilo aggiornato – DocuExtract",
+      html: getProfileUpdatedTemplate(userName, changesSummary),
+    };
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    logError(error, {
+      operation: "sendProfileUpdatedEmail",
+      service: "smtp",
+      userEmail,
+    });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Invia email quando la password viene modificata
+ */
+export async function sendPasswordChangedEmail(userEmail, userName) {
+  try {
+    const mailOptions = {
+      from: `"DocuExtract" <${process.env.EMAIL_FROM}>`,
+      to: userEmail,
+      subject: "Password modificata – DocuExtract",
+      html: getPasswordChangedTemplate(userName),
+    };
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    logError(error, {
+      operation: "sendPasswordChangedEmail",
+      service: "smtp",
+      userEmail,
+    });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Invia email quando documento è processato con successo
  */
 export async function sendDocumentProcessedEmail(userEmail, userName, documentName, documentId) {
