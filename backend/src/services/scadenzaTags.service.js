@@ -9,8 +9,8 @@ import { pool } from "../config/db.js";
 import logger from "../utils/logger.js";
 
 const DUE_TAG_DEFS = [
-  { name: "60 days", color: "#94a3b8", key: "due_60" },
-  { name: "30 days", color: "#94a3b8", key: "due_30" },
+  { name: "60 days", color: "#cbd5e1", key: "due_60" },
+  { name: "30 days", color: "#fef08a", key: "due_30" },
   { name: "10 days", color: "#eab308", key: "due_10" },
   { name: "1 day", color: "#f97316", key: "due_1" },
   { name: "Due today", color: "#ef4444", key: "due_0" },
@@ -20,12 +20,8 @@ const DUE_TAG_DEFS = [
 
 const PAID_TAG_NAME = "Paid";
 
-const OLD_TAG_NAMES = [
-  "30 days", "20 days", "10 days", "3 days", "2 days", "1 day",
-  "Due today", "Overdue",
-  "60 gg", "30 gg", "10 gg", "1 gg", "Scade oggi", "Scaduta", "Pagata",
-  "In scadenza (10 gg)", "Scadenza imminente (1 gg)", "Scaduto"
-];
+// Tag italiani creati per errore – rimuovi per evitare duplicati nel filtro
+const REPLACED_TAG_NAMES = ["60 gg", "30 gg"];
 
 function getVal(obj) {
   if (obj == null) return null;
@@ -37,18 +33,23 @@ function parseDueDate(dueDateStr) {
   if (!dueDateStr || typeof dueDateStr !== "string") return null;
   const trimmed = dueDateStr.trim();
   if (!trimmed) return null;
-  // ISO YYYY-MM-DD
-  let d = new Date(trimmed);
-  if (!isNaN(d.getTime())) return d;
-  // DD/MM/YYYY or DD-MM-YYYY
-  const match = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-  if (match) {
-    const [, day, month, year] = match;
-    const y = year.length === 2 ? 2000 + parseInt(year, 10) : parseInt(year, 10);
-    d = new Date(y, parseInt(month, 10) - 1, parseInt(day, 10));
+  // ISO YYYY-MM-DD (priorità: evita interpretazione errata)
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, y, m, day] = isoMatch;
+    const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(day, 10));
     return isNaN(d.getTime()) ? null : d;
   }
-  return null;
+  // DD/MM/YYYY or DD-MM-YYYY (europeo)
+  const euMatch = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (euMatch) {
+    const [, day, month, year] = euMatch;
+    const y = year.length === 2 ? 2000 + parseInt(year, 10) : parseInt(year, 10);
+    const d = new Date(y, parseInt(month, 10) - 1, parseInt(day, 10));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(trimmed);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 /**
@@ -80,13 +81,13 @@ function getDueTagKey(dueDate) {
 async function ensureDueTags(userId) {
   const uid = parseInt(userId, 10);
   if (isNaN(uid)) throw new Error("Invalid userId");
-  for (const oldName of OLD_TAG_NAMES) {
+  for (const oldName of REPLACED_TAG_NAMES) {
     const [r] = await pool.query(
       `DELETE FROM tags WHERE user_id = ? AND name = ?`,
       [uid, oldName]
     );
     if (r?.affectedRows > 0) {
-      logger.info("Removed obsolete tag", { userId: uid, name: oldName });
+      logger.info("Removed replaced tag", { userId: uid, name: oldName });
     }
   }
   const tags = await TagModel.findByUser(uid, { limit: 500 });

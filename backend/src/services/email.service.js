@@ -147,7 +147,7 @@ const getSuccessEmailTemplate = (userName, documentName, documentId) => {
     
     <div class="footer">
       <p>
-        This is an automated notification from <strong>SmartLegal</strong><br>
+        This is an automated notification from <strong>InvParser</strong><br>
         <a href="${process.env.FRONTEND_URL}">Go to Dashboard</a>
       </p>
     </div>
@@ -325,7 +325,7 @@ const getErrorEmailTemplate = (userName, documentName, documentId, errorMessage)
     
     <div class="footer">
       <p>
-        This is an automated notification from <strong>SmartLegal</strong><br>
+        This is an automated notification from <strong>InvParser</strong><br>
         <a href="${process.env.FRONTEND_URL}">Go to Dashboard</a>
       </p>
     </div>
@@ -347,11 +347,11 @@ const getProfileUpdatedTemplate = (userName, changesSummary) => {
   <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <h2 style="color: #059669; margin-top: 0;">Profile Updated</h2>
     <p>Hello ${userName},</p>
-    <p>Your SmartLegal profile has been updated successfully.</p>
+    <p>Your InvParser profile has been updated successfully.</p>
     ${changesSummary ? `<p style="background: #f0fdf4; padding: 12px; border-radius: 8px; border-left: 4px solid #059669;">${changesSummary}</p>` : ""}
     <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">If you did not make this change, please contact support immediately.</p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">SmartLegal – automated notification</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">InvParser – automated notification</p>
   </div>
 </body>
 </html>`;
@@ -369,12 +369,12 @@ const getPasswordChangedTemplate = (userName) => {
   <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <h2 style="color: #059669; margin-top: 0;">Password Changed</h2>
     <p>Hello ${userName},</p>
-    <p>Your SmartLegal account password has been changed successfully.</p>
+    <p>Your InvParser account password has been changed successfully.</p>
     <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #dc2626; color: #991b1b;">
       If you did not make this change, someone may have accessed your account. Change your password immediately and contact support.
     </p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">SmartLegal – automated notification</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">InvParser – automated notification</p>
   </div>
 </body>
 </html>`;
@@ -386,9 +386,9 @@ const getPasswordChangedTemplate = (userName) => {
 export async function sendProfileUpdatedEmail(userEmail, userName, changesSummary = null) {
   try {
     const mailOptions = {
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: "Profile updated – SmartLegal",
+      subject: "Profile updated – InvParser",
       html: getProfileUpdatedTemplate(userName, changesSummary),
     };
     await transporter.sendMail(mailOptions);
@@ -415,13 +415,13 @@ const getDeleteAccountTemplate = (userName, confirmLink) => {
   <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <h2 style="color: #dc2626; margin-top: 0;">Confirm Account Deletion</h2>
     <p>Hello ${userName},</p>
-    <p>You have requested to delete your SmartLegal account. Click the button below to confirm. This link expires in 24 hours.</p>
+    <p>You have requested to delete your InvParser account. Click the button below to confirm. This link expires in 24 hours.</p>
     <p style="margin: 24px 0;">
       <a href="${confirmLink}" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600;">Delete my account</a>
     </p>
     <p style="color: #64748b; font-size: 14px;">If you did not request this deletion, ignore this email. Your account will remain active.</p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">SmartLegal – automated notification</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">InvParser – automated notification</p>
   </div>
 </body>
 </html>`;
@@ -433,9 +433,9 @@ const getDeleteAccountTemplate = (userName, confirmLink) => {
 export async function sendDeleteAccountEmail(userEmail, userName, confirmLink) {
   try {
     const mailOptions = {
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: "Confirm account deletion – SmartLegal",
+      subject: "Confirm account deletion – InvParser",
       html: getDeleteAccountTemplate(userName, confirmLink),
     };
     await transporter.sendMail(mailOptions);
@@ -456,9 +456,9 @@ export async function sendDeleteAccountEmail(userEmail, userName, confirmLink) {
 export async function sendPasswordChangedEmail(userEmail, userName) {
   try {
     const mailOptions = {
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: "Password changed – SmartLegal",
+      subject: "Password changed – InvParser",
       html: getPasswordChangedTemplate(userName),
     };
     await transporter.sendMail(mailOptions);
@@ -485,7 +485,7 @@ export async function sendDocumentProcessedEmail(userEmail, userName, documentNa
     });
 
     const mailOptions = {
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
       subject: `✅ Document processed: ${documentName}`,
       html: getSuccessEmailTemplate(userName, documentName, documentId),
@@ -524,7 +524,7 @@ export async function sendDocumentErrorEmail(userEmail, userName, documentName, 
     });
 
     const mailOptions = {
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
       subject: `❌ Processing error: ${documentName}`,
       html: getErrorEmailTemplate(userName, documentName, documentId, errorMessage),

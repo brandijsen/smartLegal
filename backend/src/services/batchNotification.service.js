@@ -253,7 +253,7 @@ async function sendBatchSummaryEmail(userEmail, userName, summary) {
     : `✅ ${summary.total} documents processed successfully`;
   
   const mailOptions = {
-    from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+    from: `"InvParser" <${process.env.EMAIL_FROM}>`,
     to: userEmail,
     subject,
     html,
@@ -507,7 +507,7 @@ function getBatchEmailTemplate(userName, summary) {
     
     <div class="footer">
       <p>
-        This is an automated notification from <strong>SmartLegal</strong><br>
+        This is an automated notification from <strong>InvParser</strong><br>
         <a href="${dashboardUrl}">Go to Dashboard</a>
       </p>
     </div>

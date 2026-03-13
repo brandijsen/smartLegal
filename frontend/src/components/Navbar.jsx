@@ -35,7 +35,7 @@ const Navbar = () => {
         <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between text-white">
           
           <Link to="/" className="text-white font-semibold text-base sm:text-lg tracking-tight shrink-0">
-            DocuExtract
+            InvParser
           </Link>
 
           {/* DESKTOP LINKS */}
@@ -151,3 +151,5 @@ const Navbar = () => {
     </>
   );
 };
+
+export default Navbar;

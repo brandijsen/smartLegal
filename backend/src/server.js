@@ -82,7 +82,7 @@ setInterval(async () => {
 
 // Start
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   logger.info("Server started", {
     port: PORT,
     environment: process.env.NODE_ENV || "development",
@@ -94,4 +94,13 @@ app.listen(PORT, () => {
       errorHandling: true
     }
   });
+  // Sync scadenza tags all'avvio (corregge tag dopo restart)
+  try {
+    const { updated } = await syncScadenzaForAllDocuments();
+    if (updated > 0) {
+      logger.info("Scadenza tags synced at startup", { documentsUpdated: updated });
+    }
+  } catch (err) {
+    logger.warn("Startup scadenza sync failed", { error: err?.message });
+  }
 });

@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Uploaded user files (PDF, etc.)
 backend/src/uploads/
+
+# Database backups (contain sensitive data)
+backup_*.sql

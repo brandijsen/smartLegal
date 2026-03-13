@@ -1,15 +1,15 @@
 -- =============================================================================
--- smartLegal - Database Schema (unified migration)
+-- InvParser - Database Schema (unified migration)
 -- =============================================================================
 -- Uso:
---   Fresh install:  mysql -u root -p smartlegal < migrations/db.sql
---   DB esistente:  mysql -u root -p smartlegal < migrations/db.sql
+--   Fresh install:  mysql -u root -p invparser < migrations/db.sql
+--   DB esistente:  mysql -u root -p invparser < migrations/db.sql
 --   (le migrazioni sono idempotenti, sicure da rieseguire)
 -- =============================================================================
 
 -- Crea DB se non esiste
-CREATE DATABASE IF NOT EXISTS smartlegal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE smartlegal;
+CREATE DATABASE IF NOT EXISTS invparser CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE invparser;
 
 -- -----------------------------------------------------------------------------
 -- Users
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS document_tags (
 -- MIGRATIONS: DB esistente (idempotente, sicuro anche su fresh install)
 -- =============================================================================
 DELIMITER //
-CREATE PROCEDURE _migrate_smartlegal()
+CREATE PROCEDURE _migrate_invparser()
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND COLUMN_NAME = 'supplier_id') THEN
     ALTER TABLE documents ADD COLUMN supplier_id INT NULL AFTER marked_defective_at;
@@ -221,8 +221,8 @@ BEGIN
   END IF;
 END //
 DELIMITER ;
-CALL _migrate_smartlegal();
-DROP PROCEDURE IF EXISTS _migrate_smartlegal;
+CALL _migrate_invparser();
+DROP PROCEDURE IF EXISTS _migrate_invparser;
 
 -- =============================================================================
 -- LEGACY: Migrazione da vendors a suppliers

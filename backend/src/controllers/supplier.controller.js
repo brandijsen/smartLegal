@@ -29,7 +29,7 @@ export const listSuppliers = async (req, res) => {
     logError(err, { operation: "listSuppliers", userId: req.user?.id });
     let message = "Failed to list suppliers";
     if (err.code === "ER_NO_SUCH_TABLE") {
-      message = "Suppliers table not found. Run: mysql -u root -p smartlegal < backend/migrations/db.sql";
+      message = "Suppliers table not found. Run: mysql -u root -p invparser < backend/migrations/db.sql";
     } else if (process.env.NODE_ENV !== "production") {
       message = err.message || message;
     }

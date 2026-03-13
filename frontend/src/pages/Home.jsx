@@ -108,7 +108,7 @@ const Home = () => {
         <section className="py-12 sm:py-16 lg:py-24 bg-[#F5F7FA] w-full">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 text-center mb-8 sm:mb-12">
-              Why use DocuExtract?
+              Why use InvParser?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-10">
               {[

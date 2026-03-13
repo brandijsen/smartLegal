@@ -24,7 +24,7 @@ const RETENTION_DAYS = 30;
 const BACKUP_DIR = path.join(__dirname, "..", "backups");
 const DATE_STR = new Date().toISOString().slice(0, 10);
 const TIME_STR = new Date().toISOString().slice(11, 19).replace(/:/g, "");
-const BACKUP_FILENAME = `smartlegal_${DATE_STR}_${TIME_STR}.sql.gz`;
+const BACKUP_FILENAME = `invparser_${DATE_STR}_${TIME_STR}.sql.gz`;
 const BACKUP_PATH = path.join(BACKUP_DIR, BACKUP_FILENAME);
 
 const REQUIRED_ENV = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME", "DB_PORT"];
@@ -41,7 +41,7 @@ function runMysqldumpDocker() {
   return new Promise((resolve, reject) => {
     const args = [
       "exec",
-      "smartlegal_mysql",
+      "invparser_mysql",
       "mysqldump",
       "-u",
       process.env.DB_USER,
@@ -251,7 +251,7 @@ async function sendAlertEmail(subject, body) {
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: email,
-      subject: `[SmartLegal Backup] ${subject}`,
+      subject: `[InvParser Backup] ${subject}`,
       text: body,
     });
     log(`Alert email sent to ${email}`);

@@ -13,6 +13,7 @@ export const parseDocument = (rawText) => {
   return {
     amounts: extractAmounts(text),
     dates: extractDates(text),
+    due_date_hint: extractDueDateHint(text),
     vat_numbers: extractVatNumbers(text),
     emails: extractEmails(text),
     phones: extractPhones(text),
@@ -32,6 +33,23 @@ const extractAmounts = (text) => {
 const extractDates = (text) => {
   const regex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/g;
   return unique(text.match(regex));
+};
+
+/** Extracts date near "Scadenza", "Due date", "Payment due" etc. for AI hint */
+const extractDueDateHint = (text) => {
+  const patterns = [
+    /Scadenza\s*(?:pagamento)?\s*[:\s]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    /Pagamento\s+entro\s*[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    /Data\s+scadenza\s*[:\s]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    /Due\s+[Dd]ate\s*[:\s]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    /Payment\s+due\s*[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    /(?:Fällig|Scad\.)\s*[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+  ];
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m && m[1]) return m[1].trim();
+  }
+  return null;
 };
 
 const extractVatNumbers = (text) => {

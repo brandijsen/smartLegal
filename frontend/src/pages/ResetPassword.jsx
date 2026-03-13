@@ -22,6 +22,9 @@ const ResetPassword = () => {
     if (password !== confirm) {
       return setError("Passwords do not match.");
     }
+    if (password.length < 6) {
+      return setError("Password must be at least 6 characters.");
+    }
 
     try {
       await api.post(`/auth/reset-password/${token}`, { password });
@@ -32,7 +35,8 @@ const ResetPassword = () => {
       navigate("/", { state: { openLogin: true }, replace: true });
 
     } catch (err) {
-      setError("Reset link invalid or expired.");
+      const msg = err?.response?.data?.message;
+      setError(msg || "Reset link invalid or expired.");
     }
   };
 

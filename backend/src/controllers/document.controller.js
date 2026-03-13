@@ -5,7 +5,6 @@ import { DocumentService } from "../services/document.service.js";
 import { DocumentModel } from "../models/document.model.js";
 import { DocumentResultModel } from "../models/documentResult.model.js";
 import { SupplierModel } from "../models/supplier.model.js";
-import { upsertSupplierFromDocument } from "../services/supplier.service.js";
 import { documentQueue } from "../queues/documentQueue.js";
 import { generateCSV, generateExcel } from "../services/export.service.js";
 import { createBatch, registerDocumentInBatch } from "../services/batchNotification.service.js";
@@ -668,58 +667,6 @@ export const updateDocumentSupplier = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
     res.status(500).json({ message: "Operation failed" });
-  }
-};
-
-/*
-|--------------------------------------------------------------------------
-| SAVE SUPPLIER FROM DOCUMENT SEMANTIC
-|--------------------------------------------------------------------------
-| Crea supplier dai dati seller estratti dal documento e collega al documento.
-| Utile quando il documento ha semantic.seller ma nessun supplier linkato.
-*/
-export const saveSupplierFromSemantic = async (req, res) => {
-  const log = getRequestLogger(req);
-
-  try {
-    const documentId = req.params.id;
-    const userId = req.user.id;
-
-    const doc = await DocumentService.getDocumentById(documentId, userId);
-    const result = await DocumentModel.findById(documentId, userId);
-    const resultData = await DocumentResultModel.findParsedByDocumentId(documentId);
-    if (!resultData?.parsed_json) {
-      return res.status(400).json({ message: "Document has no parsed data yet" });
-    }
-
-    const parsed = typeof resultData.parsed_json === "string"
-      ? JSON.parse(resultData.parsed_json)
-      : resultData.parsed_json;
-    const semantic = parsed?.semantic;
-
-    if (!semantic?.seller) {
-      return res.status(400).json({ message: "No supplier data found in document" });
-    }
-
-    const supplier = await upsertSupplierFromDocument(userId, documentId, semantic);
-    if (!supplier) {
-      return res.status(400).json({ message: "Could not create supplier from document data" });
-    }
-
-    log.info("Supplier saved from document semantic", { documentId, supplierId: supplier.id });
-
-    const updatedDoc = await DocumentModel.findById(documentId, userId);
-    res.json(updatedDoc);
-  } catch (err) {
-    logError(err, {
-      operation: "saveSupplierFromSemantic",
-      userId: req.user?.id,
-      documentId: req.params?.id
-    });
-    if (err.message === "Document not found") {
-      return res.status(404).json({ message: "Document not found" });
-    }
-    res.status(500).json({ message: err.message || "Operation failed" });
   }
 };
 

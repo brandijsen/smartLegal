@@ -17,21 +17,42 @@ export const getOverview = async (req, res) => {
 
 /**
  * GET /api/stats/trends
- * Restituisce trend di upload e distribuzione tipi
+ * Restituisce trend di upload, distribuzione tipi, scadenze, spesa
  */
 export const getTrends = async (req, res) => {
   try {
     const userId = req.user.id;
     const days = parseInt(req.query.days) || 30;
 
-    const [uploadTrend, typeDistribution] = await Promise.all([
-      StatsModel.getUploadTrend(userId, days),
-      StatsModel.getDocumentTypeDistribution(userId),
+    const fetchSafe = async (fn, fallback) => {
+      try {
+        return await fn();
+      } catch (e) {
+        console.error("Stats sub-query failed:", e.message);
+        return fallback;
+      }
+    };
+
+    const [
+      uploadTrend,
+      typeDistribution,
+      scadenzaDistribution,
+      spendingTrend,
+      latestDocuments,
+    ] = await Promise.all([
+      fetchSafe(() => StatsModel.getUploadTrend(userId, days), []),
+      fetchSafe(() => StatsModel.getDocumentTypeDistribution(userId), []),
+      fetchSafe(() => StatsModel.getScadenzaDistribution(userId), []),
+      fetchSafe(() => StatsModel.getSpendingTrend(userId, 90), []), // Spesa: sempre 90 gg
+      fetchSafe(() => StatsModel.getLatestDocuments(userId, 5), []),
     ]);
 
     res.json({
       uploadTrend,
       typeDistribution,
+      scadenzaDistribution,
+      spendingTrend,
+      latestDocuments,
     });
   } catch (err) {
     console.error("Get trends failed:", err);

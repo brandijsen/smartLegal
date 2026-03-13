@@ -10,7 +10,6 @@ import VerifyError from "./pages/VerifyError";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import DummyPrivatePage from "./pages/DummyPrivatePage";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Suppliers from "./pages/Suppliers";
@@ -141,18 +140,6 @@ function App() {
           <Route
             path="/reset-password"
             element={<ResetPassword />}
-          />
-
-          {/* PRIVATE AREA */}
-          <Route
-            path="/private-test"
-            element={
-              <PersistLogin>
-                <ProtectedRoute>
-                  <DummyPrivatePage />
-                </ProtectedRoute>
-              </PersistLogin>
-            }
           />
 
         </Routes>

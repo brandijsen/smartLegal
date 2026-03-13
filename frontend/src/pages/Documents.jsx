@@ -283,16 +283,15 @@ const Documents = () => {
   };
 
   // Export functions
-  const handleExport = async (format, defectiveOnly = false) => {
+  const handleExport = async (format) => {
     setExporting(true);
     try {
-      const params = defectiveOnly ? "?defective=only" : "";
-      const response = await api.get(`/documents/export/${format}${params}`, {
+      const response = await api.get(`/documents/export/${format}`, {
         responseType: "blob"
       });
 
       const ext = format === "csv" ? "csv" : "xlsx";
-      const prefix = defectiveOnly ? "documents-defective" : "documents";
+      const prefix = "documents";
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
@@ -336,23 +335,6 @@ const Documents = () => {
               >
                 <FiDownload className="w-4 h-4" />
                 {exporting ? "Exporting..." : "Export Excel"}
-              </button>
-              <span className="text-slate-400 self-center hidden sm:inline">|</span>
-              <button
-                onClick={() => handleExport("csv", true)}
-                disabled={exporting}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm font-medium hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FiDownload className="w-4 h-4" />
-                {exporting ? "Exporting..." : "Export Defective CSV"}
-              </button>
-              <button
-                onClick={() => handleExport("excel", true)}
-                disabled={exporting}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-100 border border-red-200 text-red-800 text-sm font-medium hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <FiDownload className="w-4 h-4" />
-                {exporting ? "Exporting..." : "Export Defective Excel"}
               </button>
             </div>
           )}

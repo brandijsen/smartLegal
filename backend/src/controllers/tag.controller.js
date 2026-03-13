@@ -13,7 +13,7 @@ export async function listTags(req, res) {
     return res.json({ tags });
   } catch (err) {
     const msg = err.code === "ER_NO_SUCH_TABLE" || err.message?.includes("doesn't exist")
-      ? "Tag tables missing. Run migration: mysql -u root -p smartlegal < backend/migrations/db.sql"
+      ? "Tag tables missing. Run migration: mysql -u root -p invparser < backend/migrations/db.sql"
       : (err.message || "Failed to list tags");
     return res.status(500).json({ message: msg });
   }

@@ -15,7 +15,6 @@ import {
   exportDocumentsExcel,
   updateDocumentResult,
   updateDocumentSupplier,
-  saveSupplierFromSemantic,
   bulkUnmarkDefective,
   markDocumentDefective,
   unmarkDocumentDefective,

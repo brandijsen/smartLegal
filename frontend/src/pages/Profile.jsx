@@ -94,7 +94,7 @@ const Profile = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `docuextract-data-${Date.now()}.json`;
+      a.download = `invparser-data-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

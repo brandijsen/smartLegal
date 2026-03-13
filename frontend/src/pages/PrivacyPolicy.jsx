@@ -15,7 +15,7 @@ const PrivacyPolicy = () => {
           <section>
             <h2 className="text-lg font-semibold text-slate-900 mb-2">1. Data Controller</h2>
             <p>
-              DocuExtract is operated by Invoice Parser. We are responsible for the processing of your personal data in connection with this service.
+              InvParser is operated by Invoice Parser. We are responsible for the processing of your personal data in connection with this service.
             </p>
           </section>
 

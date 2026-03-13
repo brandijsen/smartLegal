@@ -86,10 +86,18 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
             </div>
           )}
 
-          {/* Upload Date */}
-          <div className="flex items-center gap-2 text-slate-600">
-            <FiCalendar size={16} className="text-slate-400" />
-            <span className="text-sm">Uploaded: {formatDate(document?.uploaded_at)}</span>
+          {/* Upload Date + Ref ID */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-600">
+            <span className="flex items-center gap-2 text-sm">
+              <FiCalendar size={16} className="text-slate-400" />
+              Uploaded: {formatDate(document?.uploaded_at)}
+            </span>
+            <span
+              className="text-xs text-slate-400"
+              title="Identificativo univoco del documento. Non è un conteggio: ogni utente vede solo i propri documenti."
+            >
+              Rif. #{document?.id}
+            </span>
           </div>
 
           {/* Supplier */}

@@ -39,7 +39,7 @@ For EACH field you extract, add a "confidence" score (0-100):
 DOCUMENT IDENTIFICATION (for all invoices):
 - invoice_number: the invoice/document number (e.g. "FATT-2025-001", "INV-45", "2025/1234")
 - invoice_date: the invoice issue date (prefer format YYYY-MM-DD for consistency)
-- due_date: payment due date / scadenza pagamento (e.g. "Due Date", "Payment due", "Scadenza pagamento", "Pagamento entro"). Always return as YYYY-MM-DD. If you see DD/MM/YYYY, convert to YYYY-MM-DD.
+- due_date: MANDATORY when present. Payment due date. Look for: "Scadenza", "Scadenza pagamento", "Pagamento entro", "Due Date", "Payment due", "Scadenza: DD/MM/YYYY". ALWAYS return as YYYY-MM-DD (convert DD/MM/YYYY: day=first number, month=second, year=third). Example: "Scadenza: 10/04/2026" → "2026-04-10".
 
 SELLER (for all invoices - the issuer/emittente):
 Always extract the SELLER (company or person who issued the invoice):
@@ -61,9 +61,10 @@ Each item: { "description": "...", "quantity": number, "unit_price": "0.00", "am
 
     if (document_subtype === "professional_fee") {
       specificRules = `
-DOCUMENT SUBTYPE: PROFESSIONAL FEE
+DOCUMENT SUBTYPE: PROFESSIONAL FEE (Parcella)
 
-Extract ONLY these fields (if present):
+Extract these fields (if present):
+- due_date: CRITICAL. Look for "Scadenza:", "Scadenza pagamento", "Pagamento entro". Italian format DD/MM/YYYY → convert to YYYY-MM-DD.
 - gross_fee: base fee before taxes
 - vat: { rate, amount } (if applicable)
 - withholding_tax: { rate, amount } (income tax withheld)
@@ -206,9 +207,15 @@ Calculation flow: Subtotal + VAT = Total
 `;
     }
 
+    const dueDateHint = regexData?.due_date_hint;
+    const dueDateInstruction = dueDateHint
+      ? `\nDUE DATE HINT: Regex detected "Scadenza" or similar with date "${dueDateHint}". This is the payment due date. Convert to YYYY-MM-DD (DD/MM/YYYY → year=3rd, month=2nd, day=1st) and include as due_date.\n`
+      : "";
+
     const prompt = `
 ${baseRules}
 ${specificRules}
+${dueDateInstruction}
 
 Regex-extracted hints:
 ${JSON.stringify(regexData)}
@@ -221,7 +228,9 @@ ${rawText.slice(0, 4000)}
 Return JSON with ONLY the fields you find. Example structure:
 ${jsonStructure}
 
-IMPORTANT: Omit fields that are not present in the document.
+CRITICAL: 
+- If the document shows a payment due date (Scadenza, Due date, Payment due, etc.), you MUST extract it as due_date in YYYY-MM-DD format.
+- Omit fields that are not present in the document.
 `;
 
     const res = await openai.chat.completions.create({

@@ -51,10 +51,18 @@ const createRefreshToken = (user) =>
   );
 
 const setRefreshCookie = (res, token) => {
+  const isProd = process.env.NODE_ENV === "production";
+  let crossOrigin = false;
+  try {
+    const frontUrl = process.env.FRONTEND_URL || "";
+    const baseUrl = process.env.BASE_URL || "";
+    crossOrigin = isProd && frontUrl && baseUrl &&
+      new URL(frontUrl).origin !== new URL(baseUrl).origin;
+  } catch (_) {}
   res.cookie("refreshToken", token, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: crossOrigin ? "none" : "lax",
+    secure: isProd || crossOrigin,
     maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 };
@@ -62,13 +70,28 @@ const setRefreshCookie = (res, token) => {
 // ───────────────────────────────────────────────
 // REGISTER (NO refresh token)
 // ───────────────────────────────────────────────
+const MIN_PASSWORD_LENGTH = 6;
+
 export const register = async (req, res) => {
   const log = getRequestLogger(req);
   
   try {
     const { name, email, password } = req.body;
 
-    const exists = await User.findByEmail(email);
+    if (!name?.trim()) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+    if (!email?.trim()) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const exists = await User.findByEmail(trimmedEmail);
     if (exists) {
       log.warn("Registration attempted with existing email", { email });
       return res.status(400).json({ message: "Email already used" });
@@ -77,8 +100,8 @@ export const register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: trimmedEmail,
       password: hashed,
     });
 
@@ -231,9 +254,9 @@ export const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const user = req.user;
 
-    if (!newPassword || newPassword.length < 6) {
+    if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
       return res.status(400).json({
-        message: "New password must be at least 6 characters",
+        message: `New password must be at least ${MIN_PASSWORD_LENGTH} characters`,
       });
     }
 
@@ -335,7 +358,7 @@ export const exportData = async (req, res) => {
     logAuth("data_exported", { userId });
 
     res.setHeader("Content-Type", "application/json");
-    res.setHeader("Content-Disposition", `attachment; filename="docuextract-data-${userId}-${Date.now()}.json"`);
+    res.setHeader("Content-Disposition", `attachment; filename="invparser-data-${userId}-${Date.now()}.json"`);
     return res.json(exportPayload);
   } catch (err) {
     logError(err, { operation: "exportData", userId: req.user?.id });
@@ -521,15 +544,15 @@ export const sendVerificationEmail = async (req, res) => {
 
     await transporter.sendMail({
       to: user.email,
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
-      subject: "Verify your email – SmartLegal",
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
+      subject: "Verify your email – InvParser",
       html: `
         <p>Hello ${user.name || 'there'},</p>
         <p>Please verify your email address by clicking the link below:</p>
         <p><a href="${link}" style="display: inline-block; padding: 12px 24px; background: #059669; color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600;">Verify your account</a></p>
         <p style="color: #64748b; font-size: 14px;">If you did not create an account, you can ignore this email.</p>
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-        <p style="color: #94a3b8; font-size: 12px;">SmartLegal – automated notification</p>
+        <p style="color: #94a3b8; font-size: 12px;">InvParser – automated notification</p>
       `,
     });
 
@@ -682,16 +705,16 @@ export const forgotPassword = async (req, res) => {
     const link = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
     await transporter.sendMail({
-      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      from: `"InvParser" <${process.env.EMAIL_FROM}>`,
       to: email,
-      subject: "Reset your password – SmartLegal",
+      subject: "Reset your password – InvParser",
       html: `
         <p>Hello ${user.name || 'there'},</p>
         <p>You requested to reset your password. Click the link below to set a new password. This link expires in 1 hour.</p>
         <p><a href="${link}" style="display: inline-block; padding: 12px 24px; background: #059669; color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600;">Reset your password</a></p>
         <p style="color: #64748b; font-size: 14px;">If you did not request this, ignore this email. Your password will remain unchanged.</p>
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-        <p style="color: #94a3b8; font-size: 12px;">SmartLegal – automated notification</p>
+        <p style="color: #94a3b8; font-size: 12px;">InvParser – automated notification</p>
       `,
     });
 
@@ -708,6 +731,12 @@ export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
+
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
+    }
 
     const [rows] = await pool.execute(
       "SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > NOW() LIMIT 1",

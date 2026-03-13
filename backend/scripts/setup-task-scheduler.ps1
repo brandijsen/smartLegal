@@ -2,8 +2,8 @@
 # Esegui come Amministratore: PowerShell -ExecutionPolicy Bypass -File setup-task-scheduler.ps1
 
 $scriptPath = Join-Path $PSScriptRoot "cron-backup.bat"
-$taskName = "SmartLegal-DatabaseBackup"
-$description = "Backup giornaliero database SmartLegal alle 3:00"
+$taskName = "InvParser-DatabaseBackup"
+$description = "Backup giornaliero database InvParser alle 3:00"
 
 # Rimuovi task esistente se presente
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue

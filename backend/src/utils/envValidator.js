@@ -129,7 +129,7 @@ export function validateEnvOrExit() {
  */
 export function generateEnvExample() {
   const lines = [
-    "# SmartLegal - Environment Variables",
+    "# InvParser - Environment Variables",
     "# Copy this file to .env and fill in your values",
     "",
     "# Server",
@@ -139,7 +139,7 @@ export function generateEnvExample() {
     "DB_HOST=127.0.0.1",
     "DB_USER=root",
     "DB_PASS=your_password",
-    "DB_NAME=smartlegal",
+    "DB_NAME=invparser",
     "DB_PORT=3306",
     "",
     "# JWT Secrets (generate random strings)",
