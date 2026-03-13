@@ -2,14 +2,14 @@
 -- InvParser - Database Schema (unified migration)
 -- =============================================================================
 -- Uso:
---   Fresh install:  mysql -u root -p invparser < migrations/db.sql
---   DB esistente:  mysql -u root -p invparser < migrations/db.sql
+--   Fresh install:  mysql -u root -p invParserDb < migrations/db.sql
+--   DB esistente:  mysql -u root -p invParserDb < migrations/db.sql
 --   (le migrazioni sono idempotenti, sicure da rieseguire)
 -- =============================================================================
 
 -- Crea DB se non esiste
-CREATE DATABASE IF NOT EXISTS invparser CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE invparser;
+CREATE DATABASE IF NOT EXISTS invParserDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE invParserDb;
 
 -- -----------------------------------------------------------------------------
 -- Users

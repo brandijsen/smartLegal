@@ -5,12 +5,12 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: invparser
+      MYSQL_DATABASE: invParserDb
     command: >
       --default-authentication-plugin=mysql_native_password
       --skip_ssl
     ports:
-      - "3308:3306"
+      - "3309:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 
