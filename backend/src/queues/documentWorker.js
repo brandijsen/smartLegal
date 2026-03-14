@@ -2,7 +2,6 @@ import { Worker } from "bullmq";
 import { redisConnection } from "../config/redis.js";
 import { DocumentModel } from "../models/document.model.js";
 import { DocumentResultModel } from "../models/documentResult.model.js";
-import { extractTextFromPdf } from "../services/pdfExtractor.service.js";
 import { parseDocument } from "../services/documentParser.service.js";
 import { extractSemanticData } from "../services/aiSemanticParser.service.js";
 import { classifyDocument } from "../services/documentClassifier.service.js";
@@ -33,7 +32,8 @@ new Worker(
         fileName: document.original_name 
       });
 
-      // 1️⃣ RAW TEXT
+      // 1️⃣ RAW TEXT (dynamic import per evitare crash pdfjs in serverless)
+      const { extractTextFromPdf } = await import("../services/pdfExtractor.service.js");
       const rawText = await extractTextFromPdf(
         document.user_id,
         document.stored_name

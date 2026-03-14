@@ -30,7 +30,6 @@
     "nodemailer": "^7.0.10",
     "openai": "^6.15.0",
     "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^5.4.449",
     "rate-limit-redis": "^4.3.1",
     "uuid": "^11.1.0",
     "winston": "^3.19.0",
