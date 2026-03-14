@@ -2,19 +2,8 @@ import rateLimit from "express-rate-limit";
 import { redisConnection } from "../config/redis.js";
 import logger, { logError } from "../utils/logger.js";
 
-const isRedisReady = () => redisConnection.status === "ready";
 
-const buildStore = () => {
-  if (isRedisReady()) {
-    try {
-      const RedisStore = (await import("rate-limit-redis")).default;
-      return new RedisStore({
-        sendCommand: (...args) => redisConnection.call(...args),
-      });
-    } catch (_) {}
-  }
-  return undefined; // usa memory store di default
-};
+const isRedisReady = () => redisConnection.status === "ready";
 
 /**
  * Rate Limiter Globale
