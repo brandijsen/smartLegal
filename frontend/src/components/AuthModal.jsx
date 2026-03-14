@@ -153,7 +153,7 @@ const AuthModal = ({ isOpen, onClose }) => {
         {/* GOOGLE LOGIN BUTTON */}
         <button
           type="button"
-          onClick={() => (window.location.href = "http://localhost:5000/api/auth/google")}
+          onClick={() => (window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/auth/google`)}
           className="w-full border border-gray-300 p-3 rounded flex items-center justify-center gap-3 hover:bg-gray-50 transition"
         >
           <img

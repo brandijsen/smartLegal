@@ -22,7 +22,6 @@ const REQUIRED_ENV_VARS = [
   
   // Redis
   { name: "REDIS_HOST", description: "Redis host" },
-  { name: "REDIS_PORT", description: "Redis port" },
   
   // OpenAI
   { name: "OPENAI_API_KEY", description: "OpenAI API key for AI parsing" },
@@ -41,6 +40,7 @@ const REQUIRED_ENV_VARS = [
 
 // Variabili opzionali (con default o non critiche)
 const OPTIONAL_ENV_VARS = [
+  { name: "REDIS_PORT", description: "Redis port (defaults to 6379)" },
   { name: "REDIS_PASSWORD", description: "Redis password (if required)" },
   { name: "GOOGLE_CLIENT_ID", description: "Google OAuth client ID" },
   { name: "GOOGLE_CLIENT_SECRET", description: "Google OAuth client secret" },
