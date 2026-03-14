@@ -663,7 +663,7 @@ export const googleCallback = async (req, res) => {
     );
   } catch (err) {
     logError(err, { operation: "googleCallback" });
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google`);
+    return res.redirect(`${process.env.FRONTEND_URL}/?error=google`);
   }
 };
 
