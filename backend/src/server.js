@@ -24,6 +24,10 @@ dotenv.config();
 validateEnvOrExit();
 
 const app = express();
+
+// Trust Railway/cloud reverse proxy so rate limiting uses real client IPs
+app.set("trust proxy", 1);
+
 app.use(cookieParser());
 
 // CORS

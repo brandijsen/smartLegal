@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "serve -s dist -l ${PORT:-3000}",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -19,6 +20,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.6",
     "recharts": "^3.7.0",
+    "serve": "^14.2.4",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
