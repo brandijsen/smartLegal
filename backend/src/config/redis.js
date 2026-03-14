@@ -2,7 +2,7 @@
 import IORedis from "ioredis";
 import logger from "../utils/logger.js";
 
-const redisOptions = { maxRetriesPerRequest: null };
+const redisOptions = { maxRetriesPerRequest: null, family: 0 };
 
 export const redisConnection = process.env.REDIS_URL
   ? new IORedis(process.env.REDIS_URL, redisOptions)
