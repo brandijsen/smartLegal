@@ -51,9 +51,19 @@ export const uploadDocument = async (req, res) => {
         file,
       });
 
-      await documentQueue.add("process-document", {
-        documentId: document.id,
-      });
+      try {
+        await Promise.race([
+          documentQueue.add("process-document", { documentId: document.id }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Queue timeout: Redis unavailable")), 5000)
+          ),
+        ]);
+      } catch (queueErr) {
+        log.warn("Document queued as pending (Redis unavailable)", {
+          documentId: document.id,
+          error: queueErr.message,
+        });
+      }
       
       // Registra nel batch se upload multiplo
       if (batchId) {
@@ -110,7 +120,16 @@ export const retryDocument = async (req, res) => {
     }
 
     await DocumentModel.updateStatus(documentId, "pending");
-    await documentQueue.add("process-document", { documentId });
+    try {
+      await Promise.race([
+        documentQueue.add("process-document", { documentId }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Queue timeout: Redis unavailable")), 5000)
+        ),
+      ]);
+    } catch (queueErr) {
+      log.warn("Retry queued as pending (Redis unavailable)", { documentId, error: queueErr.message });
+    }
 
     log.info("Document retry queued", { documentId });
 
