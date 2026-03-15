@@ -234,17 +234,7 @@ async function sendBatchEmail(batchKey, userId) {
  * Template e invio email batch
  */
 async function sendBatchSummaryEmail(userEmail, userName, summary) {
-  const nodemailer = await import("nodemailer");
-  
-  const transporter = nodemailer.default.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || "587"),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  const { transporter } = await import("../config/email.js");
   
   const html = getBatchEmailTemplate(userName, summary);
   

@@ -1,30 +1,5 @@
-import nodemailer from "nodemailer";
+import { transporter } from "../config/email.js";
 import { logExternalAPI, logError } from "../utils/logger.js";
-
-// Configurazione transporter SMTP
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false, // true per 465, false per altri ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-// Verifica configurazione (opzionale, solo in dev)
-if (process.env.NODE_ENV !== "production") {
-  transporter.verify((error, success) => {
-    if (error) {
-      logError(error, { 
-        operation: "smtp_verification",
-        service: "email"
-      });
-    } else {
-      logExternalAPI("smtp", "configuration_verified", {});
-    }
-  });
-}
 
 /**
  * Template HTML per email di successo
