@@ -10,7 +10,7 @@ import logger, { logError } from "../utils/logger.js";
  * Invia una singola email riassuntiva invece di N email separate.
  */
 
-const BATCH_TIMEOUT = 30000; // 30 secondi - tempo per considerare batch completato
+const BATCH_TIMEOUT = 300000; // 5 minuti - attende documenti lenti (OpenAI può impiegare fino a 30s/doc)
 const BATCH_PREFIX = "batch:";
 
 /**
@@ -147,32 +147,39 @@ async function sendSingleEmail(userId, documentId, documentName, status, errorMe
 
 /**
  * Controlla stato batch e invia email solo se necessario (chiamata da timeout)
+ * Se ci sono ancora pending, li marca come failed (sono bloccati) e invia
  */
 async function checkAndSendBatchEmail(batchKey, userId) {
   try {
-    // Verifica se il batch esiste ancora
     const exists = await redisConnection.exists(batchKey);
     if (!exists) {
       logger.debug("Batch already sent", { batchKey });
       return;
     }
     
-    // Ricontrolla stato documenti
     const allDocs = await redisConnection.hgetall(batchKey);
-    if (!allDocs || Object.keys(allDocs).length === 0) {
-      logger.debug("Batch is empty", { batchKey });
-      return;
-    }
+    if (!allDocs || Object.keys(allDocs).length === 0) return;
     
     const docs = Object.values(allDocs).map(d => JSON.parse(d));
     const pending = docs.filter(d => d.status === 'pending');
     
-    // Invia email con stato attuale (alcuni potrebbero essere ancora pending)
-    logger.info("Batch timeout - sending email with pending documents", { 
-      batchKey, 
-      pendingCount: pending.length,
-      totalCount: docs.length
-    });
+    // Marca i pending come failed (bloccati dopo il timeout)
+    for (const doc of pending) {
+      await redisConnection.hset(batchKey, `doc:${doc.id}`, JSON.stringify({
+        ...doc,
+        status: 'failed',
+        errorMessage: 'Processing timeout: document took too long',
+        completedAt: Date.now()
+      }));
+    }
+
+    if (pending.length > 0) {
+      logger.warn("Batch timeout - marking stuck documents as failed and sending email", { 
+        batchKey, 
+        stuckCount: pending.length,
+        totalCount: docs.length
+      });
+    }
     
     await sendBatchEmail(batchKey, userId);
   } catch (error) {
