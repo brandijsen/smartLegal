@@ -8,6 +8,7 @@ import { SupplierModel } from "../models/supplier.model.js";
 import { documentQueue } from "../queues/documentQueue.js";
 import { generateCSV, generateExcel } from "../services/export.service.js";
 import { createBatch, registerDocumentInBatch } from "../services/batchNotification.service.js";
+import { getFilePath } from "../config/upload.js";
 import { getRequestLogger } from "../middlewares/logger.middleware.js";
 import { logError } from "../utils/logger.js";
 
@@ -216,14 +217,7 @@ export const deleteDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    const filePath = path.join(
-      process.cwd(),
-      "src",
-      "uploads",
-      "users",
-      String(userId),
-      document.stored_name
-    );
+    const filePath = getFilePath(userId, document.stored_name);
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
@@ -348,14 +342,7 @@ export const downloadDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    const filePath = path.join(
-      process.cwd(),
-      "src",
-      "uploads",
-      "users",
-      String(userId),
-      document.stored_name
-    );
+    const filePath = getFilePath(userId, document.stored_name);
 
     if (!fs.existsSync(filePath)) {
       log.error("Document file not found on filesystem", { documentId, filePath });

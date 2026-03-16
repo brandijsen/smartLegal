@@ -11,6 +11,7 @@ import {
   sendDeleteAccountEmail,
 } from "../services/email.service.js";
 import { pool } from "../config/db.js";
+import { getUploadDir, getFilePath } from "../config/upload.js";
 import { OAuth2Client } from "google-auth-library";
 import { logAuth, logError } from "../utils/logger.js";
 import { getRequestLogger } from "../middlewares/logger.middleware.js";
@@ -372,12 +373,12 @@ export const exportData = async (req, res) => {
 
 /** Esegue la cancellazione fisica dell'account (helper condiviso) */
 const performAccountDeletion = async (userId, userEmail, log) => {
-  const uploadsDir = path.join(process.cwd(), "src", "uploads", "users", String(userId));
+  const uploadsDir = getUploadDir(userId);
   if (fs.existsSync(uploadsDir)) {
     const files = fs.readdirSync(uploadsDir);
     for (const file of files) {
       try {
-        fs.unlinkSync(path.join(uploadsDir, file));
+        fs.unlinkSync(getFilePath(userId, file));
       } catch (e) {
         log?.warn("Could not delete file", { file, error: e.message });
       }
@@ -462,14 +463,7 @@ export const uploadAvatar = async (req, res) => {
 
     // Elimina vecchio avatar se esiste
     if (oldPath) {
-      const oldFullPath = path.join(
-        process.cwd(),
-        "src",
-        "uploads",
-        "users",
-        String(userId),
-        oldPath
-      );
+      const oldFullPath = getFilePath(userId, oldPath);
       if (fs.existsSync(oldFullPath)) {
         fs.unlinkSync(oldFullPath);
       }
@@ -497,14 +491,7 @@ export const getAvatar = async (req, res) => {
       return res.status(404).json({ message: "No avatar" });
     }
 
-    const fullPath = path.join(
-      process.cwd(),
-      "src",
-      "uploads",
-      "users",
-      String(req.user.id),
-      avatarPath
-    );
+    const fullPath = getFilePath(req.user.id, avatarPath);
 
     if (!fs.existsSync(fullPath)) {
       return res.status(404).json({ message: "Avatar not found" });

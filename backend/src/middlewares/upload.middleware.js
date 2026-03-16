@@ -2,11 +2,12 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { getUploadDir } from "../config/upload.js";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userId = req.user.id;
-    const uploadPath = path.join(process.cwd(), "src", "uploads", "users", String(userId));
+    const uploadPath = getUploadDir(userId);
 
     fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
@@ -40,7 +41,7 @@ export const uploadPDF = multer({
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userId = req.user.id;
-    const uploadPath = path.join(process.cwd(), "src", "uploads", "users", String(userId));
+    const uploadPath = getUploadDir(userId);
     fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
