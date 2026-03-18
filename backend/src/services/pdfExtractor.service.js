@@ -2,7 +2,8 @@ import fs from "fs";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
+// Import lib directly to skip index.js self-test (reads ./test/data/05-versions-space.pdf)
+const pdfParseFn = require("pdf-parse/lib/pdf-parse.js");
 
 export const extractTextFromPdf = async (userId, storedName) => {
   const { getFilePath } = await import("../config/upload.js");
@@ -14,6 +15,6 @@ export const extractTextFromPdf = async (userId, storedName) => {
 
   const dataBuffer = fs.readFileSync(filePath);
 
-  const data = await pdfParse(dataBuffer);
+  const data = await pdfParseFn(dataBuffer);
   return (data.text || "").trim();
 };
