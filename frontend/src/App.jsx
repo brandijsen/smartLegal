@@ -7,6 +7,7 @@ import PageLoader from "./components/PageLoader";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PersistLogin from "./components/PersistLogin";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import "./App.css";
 
@@ -24,6 +25,7 @@ const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Profile = lazy(() => import("./pages/Profile"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function App() {
   return (
@@ -33,8 +35,9 @@ function App() {
       <ResetSuccessBanner />
 
       <div className="pt-16 sm:pt-20 lg:pt-24">
-        <Suspense fallback={<PageLoader message="Loading…" />}>
-          <Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader message="Loading…" />}>
+            <Routes>
 
             {/* HOME (public) */}
             <Route
@@ -146,8 +149,10 @@ function App() {
               element={<ResetPassword />}
             />
 
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </div>
 
       <Footer />

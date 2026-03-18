@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { FiTag } from "react-icons/fi";
 import api from "../api/axios";
+import { useToast } from "../context/ToastContext";
 
 const TagSelector = ({ documentId, documentTags = [], onTagsChange }) => {
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const hasPaid = documentTags.some((t) => t.name === "Paid");
 
@@ -15,13 +17,13 @@ const TagSelector = ({ documentId, documentTags = [], onTagsChange }) => {
       const tags = res.data.tags || [];
       const paid = tags.find((t) => t.name === "Paid");
       if (!paid) {
-        alert("Paid tag not available");
+        showToast("Paid tag not available");
         return;
       }
       await api.patch(`/documents/${documentId}/tags`, { tag_ids: [paid.id] });
       onTagsChange?.([{ id: paid.id, name: "Paid", color: paid.color || "#22c55e" }]);
     } catch {
-      alert("Operation failed");
+      showToast("Operation failed");
     } finally {
       setLoading(false);
     }

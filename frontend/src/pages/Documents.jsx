@@ -4,6 +4,7 @@ import api from "../api/axios";
 import DocumentUpload from "../components/DocumentUpload";
 import DocumentFilters from "../components/DocumentFilters";
 import PageLoader from "../components/PageLoader";
+import { useToast } from "../context/ToastContext";
 import { Link } from "react-router-dom";
 import { hasRedFlags } from "../utils/redFlagChecker";
 
@@ -42,6 +43,7 @@ const STATUS_META = {
 
 const Documents = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { showToast } = useToast();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState(null);
@@ -117,7 +119,7 @@ const Documents = () => {
       await fetchDocuments();
     } catch (err) {
       console.error("Retry failed", err);
-      alert("Unable to retry document processing");
+      showToast("Unable to retry document processing");
     } finally {
       setRetryingId(null);
     }
@@ -133,7 +135,7 @@ const Documents = () => {
       await fetchDocuments();
     } catch (err) {
       console.error("Delete failed", err);
-      alert("Unable to delete document");
+      showToast("Unable to delete document");
     }
   };
 
@@ -172,7 +174,7 @@ const Documents = () => {
       await fetchDocuments();
     } catch (err) {
       console.error("Bulk delete failed", err);
-      alert("Some documents could not be deleted");
+      showToast("Some documents could not be deleted");
     } finally {
       setBulkProcessing(false);
     }
@@ -186,7 +188,7 @@ const Documents = () => {
     });
 
     if (failedSelected.length === 0) {
-      alert("No failed documents selected");
+      showToast("No failed documents selected");
       return;
     }
 
@@ -200,7 +202,7 @@ const Documents = () => {
       await fetchDocuments();
     } catch (err) {
       console.error("Bulk retry failed", err);
-      alert("Some documents could not be retried");
+      showToast("Some documents could not be retried");
     } finally {
       setBulkProcessing(false);
     }
@@ -214,7 +216,7 @@ const Documents = () => {
     });
 
     if (defectiveSelected.length === 0) {
-      alert("No defective documents selected");
+      showToast("No defective documents selected");
       return;
     }
 
@@ -227,7 +229,7 @@ const Documents = () => {
       await fetchDocuments();
     } catch (err) {
       console.error("Bulk unmark failed", err);
-      alert("Operation failed");
+      showToast("Operation failed");
     } finally {
       setBulkProcessing(false);
     }
@@ -304,7 +306,7 @@ const Documents = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Export failed:", err);
-      alert("Export failed. Please try again.");
+      showToast("Export failed. Please try again.");
     } finally {
       setExporting(false);
     }

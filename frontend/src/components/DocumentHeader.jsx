@@ -1,9 +1,11 @@
 import { FiFileText, FiCalendar, FiHash, FiDownload, FiEdit2, FiBriefcase } from "react-icons/fi";
 import api from "../api/axios";
 import { useState } from "react";
+import { useToast } from "../context/ToastContext";
 
 const DocumentHeader = ({ document, parsed, resultMetadata }) => {
   const [downloading, setDownloading] = useState(false);
+  const { showToast } = useToast();
 
   const formatDate = (dateString) => {
     if (!dateString) return "—";
@@ -46,7 +48,7 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download failed:", err);
-      alert("Download failed. Please try again.");
+      showToast("Download failed. Please try again.");
     } finally {
       setDownloading(false);
     }

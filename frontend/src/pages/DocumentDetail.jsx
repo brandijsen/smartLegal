@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FiAlertTriangle, FiCheckCircle, FiBriefcase } from "react-icons/fi";
 import api from "../api/axios";
+import { useToast } from "../context/ToastContext";
 import PageLoader from "../components/PageLoader";
 import DocumentHeader from "../components/DocumentHeader";
 import PrimaryAmountCard from "../components/PrimaryAmountCard";
@@ -14,6 +15,7 @@ const TABS = ["pdf", "raw", "json"];
 
 const DocumentDetail = () => {
   const { id } = useParams();
+  const { showToast } = useToast();
 
   const [document, setDocument] = useState(null);
   const [parsed, setParsed] = useState(null);
@@ -90,7 +92,7 @@ const DocumentDetail = () => {
       await refreshDocument();
     } catch (err) {
       console.error("Failed to mark/unmark defective:", err);
-      alert("Operation failed");
+      showToast("Operation failed");
     }
   };
 
