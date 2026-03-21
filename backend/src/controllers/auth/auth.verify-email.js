@@ -81,7 +81,7 @@ export const verify = async (req, res) => {
     }
     return res.redirect(`${process.env.FRONTEND_URL}/verify/success`);
   } catch (err) {
-    logError(err, { operation: "verify", token: req.params?.token });
+    logError(err, { operation: "verify" });
     return res.redirect(`${process.env.FRONTEND_URL}/verify/error`);
   }
 };

@@ -12,13 +12,28 @@ function hashToken(rawToken) {
  * Marks a refresh JWT as revoked until it would have expired (logout / stolen token).
  * Best-effort: failures are logged; caller still clears cookies.
  */
+async function setRevocationKey(key, ttlSeconds, attempts = 3) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      await redisConnection.set(key, "1", "EX", ttlSeconds);
+      return true;
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 80 * (i + 1)));
+      }
+    }
+  }
+  logger.warn("Refresh token revocation failed after retries (Redis)", {
+    error: lastErr?.message,
+  });
+  return false;
+}
+
 export async function revokeRefreshToken(rawToken, ttlSeconds) {
   if (!rawToken || ttlSeconds < 1) return;
-  try {
-    await redisConnection.set(`${PREFIX}${hashToken(rawToken)}`, "1", "EX", ttlSeconds);
-  } catch (err) {
-    logger.warn("Refresh token revocation skipped (Redis)", { error: err.message });
-  }
+  await setRevocationKey(`${PREFIX}${hashToken(rawToken)}`, ttlSeconds);
 }
 
 /**
@@ -35,4 +50,25 @@ export async function isRefreshTokenRevoked(rawToken) {
     });
     return false;
   }
+}
+
+/** Best-effort GET with short retry (reduces flaky denials when Redis blips). */
+export async function isRefreshTokenRevokedWithRetry(rawToken, attempts = 2) {
+  if (!rawToken) return true;
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const v = await redisConnection.get(`${PREFIX}${hashToken(rawToken)}`);
+      return v === "1";
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 50 * (i + 1)));
+      }
+    }
+  }
+  logger.warn("Refresh revocation check failed after retries; allowing refresh", {
+    error: lastErr?.message,
+  });
+  return false;
 }

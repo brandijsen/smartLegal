@@ -127,8 +127,8 @@ export async function ensureDefaultTagsForUser(userId) {
  * Sync due tag for a single document.
  * If document has "Paid" tag, we do NOT update (user marked as paid).
  */
-export async function syncDueDateForDocument(documentId, userId, semantic) {
-  const tagIds = await ensureDueTags(userId);
+export async function syncDueDateForDocument(documentId, userId, semantic, options = {}) {
+  const tagIds = options.tagIds ?? (await ensureDueTags(userId));
   const currentTags = await TagModel.getTagsForDocument(documentId, userId);
 
   const hasPaid = currentTags.some((t) => t.name === PAID_TAG_NAME);
@@ -182,24 +182,30 @@ export async function syncDueDatesForAllDocuments() {
        AND d.status = 'done'`
   );
 
-  // Parallel sync deadlocks MySQL (document_tags / tags) when many rows touch the same user.
+  const byUser = new Map();
+  for (const row of rows) {
+    const uid = row.user_id;
+    if (!byUser.has(uid)) byUser.set(uid, []);
+    byUser.get(uid).push(row);
+  }
+
   const CONCURRENCY = 1;
 
-  async function processRow(row, attempt = 0) {
+  async function processRow(row, tagIds, attempt = 0) {
     try {
       const parsed =
         typeof row.parsed_json === "string" ? JSON.parse(row.parsed_json) : row.parsed_json;
       const semantic = parsed?.semantic;
       if (!semantic) return false;
 
-      await syncDueDateForDocument(row.document_id, row.user_id, semantic);
+      await syncDueDateForDocument(row.document_id, row.user_id, semantic, { tagIds });
       return true;
     } catch (err) {
       const isDeadlock =
         err.code === "ER_LOCK_DEADLOCK" || err.errno === 1213 || /deadlock/i.test(err.message || "");
       if (isDeadlock && attempt < 2) {
         await new Promise((r) => setTimeout(r, 80 + Math.random() * 120));
-        return processRow(row, attempt + 1);
+        return processRow(row, tagIds, attempt + 1);
       }
       logger.warn("Due tag sync failed for document", {
         documentId: row.document_id,
@@ -210,10 +216,13 @@ export async function syncDueDatesForAllDocuments() {
   }
 
   let updated = 0;
-  for (let i = 0; i < rows.length; i += CONCURRENCY) {
-    const chunk = rows.slice(i, i + CONCURRENCY);
-    const ok = await Promise.all(chunk.map((row) => processRow(row)));
-    updated += ok.filter(Boolean).length;
+  for (const [, userRows] of byUser) {
+    const tagIds = await ensureDueTags(userRows[0].user_id);
+    for (let i = 0; i < userRows.length; i += CONCURRENCY) {
+      const chunk = userRows.slice(i, i + CONCURRENCY);
+      const ok = await Promise.all(chunk.map((row) => processRow(row, tagIds)));
+      updated += ok.filter(Boolean).length;
+    }
   }
 
   return { updated };

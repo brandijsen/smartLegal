@@ -1,5 +1,11 @@
 import logger from "../utils/logger.js";
 import { v4 as uuidv4 } from "uuid";
+import { sanitizeRequestPath } from "../utils/logSanitize.js";
+
+function safePath(req) {
+  const raw = (req.originalUrl || req.url || req.path || "").split("?")[0];
+  return sanitizeRequestPath(raw);
+}
 
 /**
  * Middleware for automatic HTTP request logging
@@ -18,7 +24,7 @@ export const requestLogger = (req, res, next) => {
   const requestContext = {
     requestId: req.requestId,
     method: req.method,
-    path: req.path,
+    path: safePath(req),
     ip: req.ip || req.connection.remoteAddress,
     userAgent: req.get("user-agent"),
   };
@@ -92,7 +98,7 @@ export const errorHandler = (err, req, res, next) => {
   const errorContext = {
     requestId: req.requestId,
     method: req.method,
-    path: req.path,
+    path: safePath(req),
     userId: req.user?.id,
     userEmail: req.user?.email,
     errorName: err.name,

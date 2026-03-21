@@ -78,11 +78,32 @@ export function useDocumentsPage(showToast) {
 
   useEffect(() => {
     fetchDocuments(pagination.page, filters);
-    const interval = setInterval(
-      () => fetchDocuments(pagination.page, filters),
-      5000
-    );
-    return () => clearInterval(interval);
+
+    const visibleMs = 5000;
+    const hiddenMs = 45000;
+    let intervalId;
+
+    const tick = () => fetchDocuments(pagination.page, filters);
+
+    const arm = () => {
+      if (intervalId) clearInterval(intervalId);
+      const ms = document.visibilityState === "visible" ? visibleMs : hiddenMs;
+      intervalId = setInterval(tick, ms);
+    };
+
+    arm();
+    const onVis = () => arm();
+    document.addEventListener("visibilitychange", onVis);
+    const onFocus = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onFocus);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [pagination.page, filters, fetchDocuments]);
 
   const updateURL = useCallback(

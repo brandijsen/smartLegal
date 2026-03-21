@@ -45,18 +45,30 @@ export const User = {
   async findById(id) {
     try {
       const [rows] = await pool.execute(
-        "SELECT id, name, email, avatar_path, verified, verification_token, password, auth_provider FROM users WHERE id = ? LIMIT 1",
+        "SELECT id, name, email, avatar_path, verified, verification_token, password, auth_provider, refresh_token_version FROM users WHERE id = ? LIMIT 1",
         [id]
       );
       return rows[0];
     } catch (e) {
       if (e.code === "ER_BAD_FIELD_ERROR") {
         const [rows] = await pool.execute(
-          "SELECT id, name, email, verified, verification_token, password FROM users WHERE id = ? LIMIT 1",
+          "SELECT id, name, email, verified, verification_token, password, auth_provider FROM users WHERE id = ? LIMIT 1",
           [id]
         );
-        return { ...rows[0], auth_provider: "email" };
+        return { ...rows[0], auth_provider: "email", refresh_token_version: 0 };
       }
+      throw e;
+    }
+  },
+
+  async incrementRefreshTokenVersion(id) {
+    try {
+      await pool.execute(
+        "UPDATE users SET refresh_token_version = refresh_token_version + 1 WHERE id = ?",
+        [id]
+      );
+    } catch (e) {
+      if (e.code === "ER_BAD_FIELD_ERROR") return;
       throw e;
     }
   },

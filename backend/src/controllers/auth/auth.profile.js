@@ -84,6 +84,7 @@ export const changePassword = async (req, res) => {
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await User.updatePassword(user.id, hashed);
+    await User.incrementRefreshTokenVersion(user.id);
     invalidateUserAuthCache(user.id);
 
     logAuth("password_changed", { userId: user.id });

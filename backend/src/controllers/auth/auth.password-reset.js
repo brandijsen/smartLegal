@@ -79,10 +79,12 @@ export const resetPassword = async (req, res) => {
       [hashed, user.id]
     );
 
+    await User.incrementRefreshTokenVersion(user.id);
     invalidateUserAuthCache(user.id);
 
-    const accessToken = createAccessToken(user);
-    const refreshToken = createRefreshToken(user);
+    const freshUser = await User.findById(user.id);
+    const accessToken = createAccessToken(freshUser);
+    const refreshToken = createRefreshToken(freshUser);
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
 

@@ -11,7 +11,7 @@ import {
 import { JWT_VERIFY_OPTIONS } from "../../utils/jwtConstants.js";
 import {
   revokeRefreshToken,
-  isRefreshTokenRevoked,
+  isRefreshTokenRevokedWithRetry,
 } from "../../utils/refreshTokenRevocation.js";
 import { createAccessToken, createRefreshToken, toSafeUser } from "./auth.shared.js";
 
@@ -68,7 +68,7 @@ export const refresh = async (req, res) => {
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
-    if (await isRefreshTokenRevoked(token)) {
+    if (await isRefreshTokenRevokedWithRetry(token)) {
       log.warn("Token refresh attempted with revoked refresh token");
       return res.status(401).json({ message: "Session ended" });
     }
@@ -80,7 +80,20 @@ export const refresh = async (req, res) => {
       return res.status(401).json({ message: "User not found" });
     }
 
+    const tokenVersion = Number(decoded.v ?? 0) || 0;
+    const userVersion = Number(user.refresh_token_version ?? 0) || 0;
+    if (tokenVersion !== userVersion) {
+      log.warn("Token refresh attempted with stale session version", { userId: user.id });
+      return res.status(401).json({ message: "Session ended" });
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const ttl = Math.max(1, decoded.exp - nowSec);
+    await revokeRefreshToken(token, ttl);
+
     const accessToken = createAccessToken(user);
+    const newRefresh = createRefreshToken(user);
+    setRefreshCookie(res, newRefresh);
     setAccessCookie(res, accessToken);
 
     logAuth("token_refreshed", { userId: user.id });

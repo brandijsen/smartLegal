@@ -29,5 +29,6 @@ export function createAccessToken(user) {
 }
 
 export function createRefreshToken(user) {
-  return jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, JWT_SIGN_OPTIONS_REFRESH);
+  const v = Number(user?.refresh_token_version ?? 0) || 0;
+  return jwt.sign({ id: user.id, v }, process.env.JWT_REFRESH_SECRET, JWT_SIGN_OPTIONS_REFRESH);
 }
