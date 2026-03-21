@@ -5,6 +5,10 @@ export const StatsModel = {
    * Gets overview statistics for the user
    */
   async getOverview(userId) {
+    const uid = Number(userId);
+    if (!Number.isFinite(uid)) {
+      throw new Error("Invalid user id");
+    }
     // Total documents per status
     const [statusStats] = await pool.execute(
       `
@@ -17,7 +21,7 @@ export const StatsModel = {
       FROM documents
       WHERE user_id = ?
       `,
-      [userId]
+      [uid]
     );
 
     // Count defective documents
@@ -27,7 +31,7 @@ export const StatsModel = {
       FROM documents
       WHERE user_id = ? AND is_defective = 1
       `,
-      [userId]
+      [uid]
     );
 
     // Calculate total amounts (aggregating from document_results)
@@ -44,7 +48,7 @@ export const StatsModel = {
       JOIN document_results dr ON d.id = dr.document_id
       WHERE d.user_id = ? AND d.status = 'done'
       `,
-      [userId]
+      [uid]
     );
 
     // Aggregate amounts by currency
@@ -80,18 +84,24 @@ export const StatsModel = {
    * Gets upload trend (last 30 days)
    */
   async getUploadTrend(userId, days = 30) {
-    const [rows] = await pool.execute(
+    const uid = Number(userId);
+    const daysInt = Math.max(1, Math.min(366, parseInt(days, 10) || 30));
+    if (!Number.isFinite(uid)) {
+      throw new Error("Invalid user id");
+    }
+    // INTERVAL ? in prepared statements breaks on some MySQL builds (ER_WRONG_ARGUMENTS)
+    const [rows] = await pool.query(
       `
       SELECT 
         DATE(uploaded_at) as date,
         COUNT(*) as count
       FROM documents
       WHERE user_id = ? 
-        AND uploaded_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+        AND uploaded_at >= DATE_SUB(CURDATE(), INTERVAL ${daysInt} DAY)
       GROUP BY DATE(uploaded_at)
       ORDER BY date ASC
       `,
-      [userId, days]
+      [uid]
     );
 
     return rows;
@@ -101,6 +111,10 @@ export const StatsModel = {
    * Gets distribution by document type (doc_type + doc_subtype)
    */
   async getDocumentTypeDistribution(userId) {
+    const uid = Number(userId);
+    if (!Number.isFinite(uid)) {
+      throw new Error("Invalid user id");
+    }
     const [rows] = await pool.execute(
       `
       SELECT 
@@ -112,7 +126,7 @@ export const StatsModel = {
       WHERE d.user_id = ? AND d.status = 'done'
       GROUP BY doc_type, doc_subtype
       `,
-      [userId]
+      [uid]
     );
 
     return rows;
@@ -122,6 +136,10 @@ export const StatsModel = {
    * Gets document count per due-date bucket (due_date tag)
    */
   async getDueDateDistribution(userId) {
+    const uid = Number(userId);
+    if (!Number.isFinite(uid)) {
+      throw new Error("Invalid user id");
+    }
     const [rows] = await pool.execute(
       `
       SELECT t.name, t.color, COUNT(CASE WHEN d.id IS NOT NULL THEN 1 END) as count
@@ -133,7 +151,7 @@ export const StatsModel = {
       ORDER BY 
         FIELD(t.name, '60 days', '30 days', '10 days', '1 day', 'Due today', 'Overdue')
       `,
-      [userId, userId]
+      [uid, uid]
     );
 
     return rows;
@@ -143,6 +161,10 @@ export const StatsModel = {
    * Gets spending aggregated by month (last N days, by invoice or upload date)
    */
   async getSpendingTrend(userId, days = 90) {
+    const uid = Number(userId);
+    if (!Number.isFinite(uid)) {
+      throw new Error("Invalid user id");
+    }
     const [rows] = await pool.execute(
       `
       SELECT 
@@ -170,12 +192,13 @@ export const StatsModel = {
       WHERE d.user_id = ? AND d.status = 'done'
         AND JSON_EXTRACT(dr.parsed_json, '$.semantic.amounts') IS NOT NULL
       `,
-      [userId]
+      [uid]
     );
 
     const byMonth = {};
+    const daysInt = Math.max(1, Math.min(3660, parseInt(days, 10) || 90));
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
+    cutoff.setDate(cutoff.getDate() - daysInt);
 
     for (const row of rows) {
       let month = row?.month;
@@ -203,15 +226,21 @@ export const StatsModel = {
    * Latest uploaded documents (for dashboard)
    */
   async getLatestDocuments(userId, limit = 5) {
-    const [rows] = await pool.execute(
+    const uid = Number(userId);
+    const limitInt = Math.max(1, Math.min(100, parseInt(limit, 10) || 5));
+    if (!Number.isFinite(uid)) {
+      throw new Error("Invalid user id");
+    }
+    // LIMIT ? in prepared statements fails on some MySQL/mysqld_stmt_execute setups
+    const [rows] = await pool.query(
       `
       SELECT id, original_name, status, uploaded_at
       FROM documents
       WHERE user_id = ?
       ORDER BY uploaded_at DESC
-      LIMIT ?
+      LIMIT ${limitInt}
       `,
-      [userId, limit]
+      [uid]
     );
 
     return rows;

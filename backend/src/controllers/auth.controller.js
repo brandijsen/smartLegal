@@ -244,10 +244,9 @@ export const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const user = req.user;
 
-    if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({
-        message: `New password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-      });
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ message: pwCheck.message });
     }
 
     if (!user.password) {

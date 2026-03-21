@@ -182,9 +182,10 @@ export async function syncDueDatesForAllDocuments() {
        AND d.status = 'done'`
   );
 
-  const CONCURRENCY = 10;
+  // Parallel sync deadlocks MySQL (document_tags / tags) when many rows touch the same user.
+  const CONCURRENCY = 1;
 
-  async function processRow(row) {
+  async function processRow(row, attempt = 0) {
     try {
       const parsed =
         typeof row.parsed_json === "string" ? JSON.parse(row.parsed_json) : row.parsed_json;
@@ -194,6 +195,12 @@ export async function syncDueDatesForAllDocuments() {
       await syncDueDateForDocument(row.document_id, row.user_id, semantic);
       return true;
     } catch (err) {
+      const isDeadlock =
+        err.code === "ER_LOCK_DEADLOCK" || err.errno === 1213 || /deadlock/i.test(err.message || "");
+      if (isDeadlock && attempt < 2) {
+        await new Promise((r) => setTimeout(r, 80 + Math.random() * 120));
+        return processRow(row, attempt + 1);
+      }
       logger.warn("Due tag sync failed for document", {
         documentId: row.document_id,
         error: err.message
