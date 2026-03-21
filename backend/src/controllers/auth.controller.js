@@ -21,6 +21,7 @@ import {
   setAccessCookie,
   clearAuthCookies,
 } from "../utils/authCookies.js";
+import { invalidateUserAuthCache } from "../utils/userAuthCache.js";
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -216,6 +217,7 @@ export const updateProfile = async (req, res) => {
 
     await User.updateProfile(userId, { name: name.trim(), email: trimmedEmail });
     const updated = await User.findById(userId);
+    invalidateUserAuthCache(userId);
     logAuth("profile_updated", { userId, email: trimmedEmail });
 
     // Notifica via email (inviare alla NUOVA email)
@@ -262,6 +264,7 @@ export const changePassword = async (req, res) => {
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await User.updatePassword(user.id, hashed);
+    invalidateUserAuthCache(user.id);
 
     logAuth("password_changed", { userId: user.id });
 
@@ -455,6 +458,7 @@ export const uploadAvatar = async (req, res) => {
 
     await User.updateAvatar(userId, filename);
     const updated = await User.findById(userId);
+    invalidateUserAuthCache(userId);
 
     logAuth("avatar_updated", { userId });
 
