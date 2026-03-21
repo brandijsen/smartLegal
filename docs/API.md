@@ -1,19 +1,19 @@
 # InvParser API Reference
 
 Base URL: `/api`  
-Authentication: Bearer token in `Authorization` header (except public endpoints).
+Authentication: **httpOnly cookies** (`accessToken`, `refreshToken`) sent with `credentials: true` on cross-origin requests, **or** optional `Authorization: Bearer <accessToken>` for API clients.
 
 ---
 
 ## Authentication
 
-Protected endpoints require:
+Browser clients: cookies are set on login/register/refresh/OAuth/verify; the SPA does **not** store the access token in `localStorage`.
+
+Optional header (scripts, mobile apps):
 
 ```
 Authorization: Bearer <accessToken>
 ```
-
-The frontend stores `accessToken` and sends it with each request. Refresh tokens are stored in HTTP-only cookies.
 
 ---
 
@@ -22,8 +22,8 @@ The frontend stores `accessToken` and sends it with each request. Refresh tokens
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | `/register` | No | Register new user |
-| POST | `/login` | No | Login (returns accessToken + sets refresh cookie) |
-| POST | `/refresh` | Cookie | Refresh access token |
+| POST | `/login` | No | Login (sets httpOnly access + refresh cookies) |
+| POST | `/refresh` | Cookie | Refresh access cookie (`{ "ok": true }`) |
 | GET | `/me` | Yes | Get current user profile |
 | PATCH | `/profile` | Yes | Update name/email |
 | POST | `/change-password` | Yes | Change password |
@@ -36,7 +36,7 @@ The frontend stores `accessToken` and sends it with each request. Refresh tokens
 | GET | `/verify/:token` | No | Verify email |
 | GET | `/google` | No | Start Google OAuth |
 | GET | `/google/callback` | No | Google OAuth callback |
-| POST | `/logout` | No | Logout (clears refresh cookie) |
+| POST | `/logout` | No | Logout (clears auth cookies) |
 | POST | `/forgot-password` | No | Request password reset |
 | POST | `/reset-password/:token` | No | Reset password with token |
 
@@ -46,7 +46,7 @@ The frontend stores `accessToken` and sends it with each request. Refresh tokens
 ```json
 POST /api/auth/register
 { "name": "John Doe", "email": "john@example.com", "password": "Secret123" }
-→ { "accessToken": "...", "user": { "id", "name", "email", "verified" } }
+→ { "user": { "id", "name", "email", "verified" } } + Set-Cookie (access, refresh)
 ```
 Password rules: min 8 chars, at least 1 uppercase, 1 lowercase, 1 number.
 
@@ -54,7 +54,7 @@ Password rules: min 8 chars, at least 1 uppercase, 1 lowercase, 1 number.
 ```json
 POST /api/auth/login
 { "email": "john@example.com", "password": "secret123" }
-→ { "accessToken": "...", "user": { "id", "name", "email", "verified" } }
+→ { "user": { "id", "name", "email", "verified" } } + Set-Cookie (access, refresh)
 ```
 
 **Update profile**
@@ -85,6 +85,7 @@ All document endpoints require authentication.
 | GET | `/export/excel` | Export documents as Excel |
 | GET | `/defective/list` | List defective documents |
 | POST | `/bulk-unmark-defective` | Bulk unmark defective |
+| POST | `/bulk-retry` | Bulk retry failed documents |
 | GET | `/:id` | Get document metadata |
 | GET | `/:id/download` | Download PDF file |
 | GET | `/:id/result` | Get parsed result (JSON) |
@@ -172,6 +173,15 @@ files: PDF file(s) (max 20)
 { "documentIds": [1, 2, 3] }
 → { "message": "N document(s) unmarked as defective", "count": N }
 ```
+
+### Bulk retry (POST `/bulk-retry`)
+
+```json
+{ "documentIds": [1, 2, 5] }
+→ { "message": "N document(s) re-queued", "queued": N }
+```
+
+Only documents with status `failed` are retried. Non-existent or non-owned IDs are skipped.
 
 ### Set document tags (PATCH `/:id/tags`)
 

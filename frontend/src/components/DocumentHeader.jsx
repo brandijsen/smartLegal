@@ -96,7 +96,7 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
             </span>
             <span
               className="text-xs text-slate-400"
-              title="Unique document identifier. Not a count: each user sees only their own documents."
+              title="Unique invoice identifier. Not a count: each user sees only their own invoices."
             >
               Ref. #{document?.id}
             </span>
@@ -132,7 +132,7 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
             className="flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <FiDownload className="w-4 h-4" />
-            {downloading ? "Downloading..." : "Download PDF"}
+            {downloading ? "Downloading..." : "Download invoice PDF"}
           </button>
 
           {/* Status Badge */}

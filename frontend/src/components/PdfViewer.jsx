@@ -44,7 +44,7 @@ const PdfViewer = ({ documentId, className = "" }) => {
 
   if (loading) {
     return (
-      <div className={`bg-slate-100 rounded-lg ${className}`} style={{ minHeight: 500 }}>
+      <div className={`bg-slate-100 rounded-lg min-h-[500px] ${className}`}>
         <PageLoader message="Loading PDF…" variant="inline" />
       </div>
     );
@@ -52,7 +52,9 @@ const PdfViewer = ({ documentId, className = "" }) => {
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-red-50 rounded-lg border border-red-200 ${className}`} style={{ minHeight: 200 }}>
+      <div
+        className={`flex items-center justify-center bg-red-50 rounded-lg border border-red-200 min-h-[200px] ${className}`}
+      >
         <p className="text-red-600">{error}</p>
       </div>
     );
@@ -64,8 +66,7 @@ const PdfViewer = ({ documentId, className = "" }) => {
     <iframe
       src={`${pdfUrl}#toolbar=1`}
       title="Document PDF"
-      className={`w-full rounded-lg border border-slate-200 bg-white ${className}`}
-      style={{ minHeight: 600 }}
+      className={`w-full min-h-[600px] rounded-lg border border-slate-200 bg-white ${className}`}
     />
   );
 };

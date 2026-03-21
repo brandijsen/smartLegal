@@ -16,6 +16,11 @@ import { OAuth2Client } from "google-auth-library";
 import { logAuth, logError } from "../utils/logger.js";
 import { getRequestLogger } from "../middlewares/logger.middleware.js";
 import { validatePassword } from "../utils/passwordValidator.js";
+import {
+  setRefreshCookie,
+  setAccessCookie,
+  clearAuthCookies,
+} from "../utils/authCookies.js";
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -52,25 +57,8 @@ const createRefreshToken = (user) =>
     { expiresIn: "30d" }
   );
 
-const setRefreshCookie = (res, token) => {
-  const isProd = process.env.NODE_ENV === "production";
-  let crossOrigin = false;
-  try {
-    const frontUrl = process.env.FRONTEND_URL || "";
-    const baseUrl = process.env.BASE_URL || "";
-    crossOrigin = isProd && frontUrl && baseUrl &&
-      new URL(frontUrl).origin !== new URL(baseUrl).origin;
-  } catch (_) {}
-  res.cookie("refreshToken", token, {
-    httpOnly: true,
-    sameSite: crossOrigin ? "none" : "lax",
-    secure: isProd || crossOrigin,
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-  });
-};
-
 // ───────────────────────────────────────────────
-// REGISTER (NO refresh token)
+// REGISTER
 // ───────────────────────────────────────────────
 export const register = async (req, res) => {
   const log = getRequestLogger(req);
@@ -105,11 +93,13 @@ export const register = async (req, res) => {
     });
 
     const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken(user);
+    setRefreshCookie(res, refreshToken);
+    setAccessCookie(res, accessToken);
 
     logAuth("user_registered", { userId: user.id, email: user.email });
 
     return res.json({
-      accessToken,
       user: toSafeUser({ ...user, verified: 0 }),
     });
   } catch (err) {
@@ -143,11 +133,11 @@ export const login = async (req, res) => {
     const refreshToken = createRefreshToken(user);
 
     setRefreshCookie(res, refreshToken);
+    setAccessCookie(res, accessToken);
 
     logAuth("user_logged_in", { userId: user.id, email: user.email });
 
     return res.json({
-      accessToken,
       user: toSafeUser(user),
     });
   } catch (err) {
@@ -178,10 +168,11 @@ export const refresh = async (req, res) => {
     }
 
     const accessToken = createAccessToken(user);
-    
+    setAccessCookie(res, accessToken);
+
     logAuth("token_refreshed", { userId: user.id });
-    
-    return res.json({ accessToken });
+
+    return res.json({ ok: true });
   } catch (err) {
     logError(err, { operation: "refresh" });
     return res.status(401).json({ message: "Invalid refresh token" });
@@ -432,11 +423,7 @@ export const confirmDeleteAccount = async (req, res) => {
 
     logAuth("account_deleted", { userId: user.id, email: user.email });
 
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+    clearAuthCookies(res);
 
     return res.redirect(successUrl);
   } catch (err) {
@@ -573,12 +560,11 @@ export const verify = async (req, res) => {
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
     setRefreshCookie(res, refreshToken);
+    setAccessCookie(res, accessToken);
 
     logAuth("email_verified", { userId: user.id, email: user.email });
 
-    return res.redirect(
-      `${process.env.FRONTEND_URL}/verify/success?token=${accessToken}`
-    );
+    return res.redirect(`${process.env.FRONTEND_URL}/verify/success`);
   } catch (err) {
     logError(err, { operation: "verify", token: req.params?.token });
     return res.redirect(`${process.env.FRONTEND_URL}/verify/error`);
@@ -642,10 +628,9 @@ export const googleCallback = async (req, res) => {
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
     setRefreshCookie(res, refreshToken);
+    setAccessCookie(res, accessToken);
 
-    return res.redirect(
-      `${process.env.GOOGLE_FRONTEND_REDIRECT}?token=${accessToken}`
-    );
+    return res.redirect(process.env.GOOGLE_FRONTEND_REDIRECT);
   } catch (err) {
     logError(err, { operation: "googleCallback" });
     return res.redirect(`${process.env.FRONTEND_URL}/?error=google`);
@@ -657,12 +642,8 @@ export const googleCallback = async (req, res) => {
 // ───────────────────────────────────────────────
 export const logout = async (req, res) => {
   logAuth("user_logged_out", { userId: req.user?.id });
-  
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+
+  clearAuthCookies(res);
 
   return res.json({ message: "Logged out successfully" });
 };
@@ -743,11 +724,11 @@ export const resetPassword = async (req, res) => {
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
     setRefreshCookie(res, refreshToken);
+    setAccessCookie(res, accessToken);
 
     logAuth("password_reset_completed", { userId: user.id, email: user.email });
 
     return res.json({
-      accessToken,
       user: toSafeUser(user),
     });
   } catch (err) {

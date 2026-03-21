@@ -205,6 +205,21 @@ async findByIdForWorker(documentId) {
     );
   },
 
+  async bulkUpdateStatusForUser(userId, ids, status) {
+    if (!ids?.length) return 0;
+    const placeholders = ids.map(() => "?").join(",");
+    const [result] = await pool.execute(
+      `
+      UPDATE documents
+      SET status = ?,
+          processed_at = IF(? IN ('done','failed'), NOW(), processed_at)
+      WHERE user_id = ? AND id IN (${placeholders})
+      `,
+      [status, status, userId, ...ids]
+    );
+    return result.affectedRows || 0;
+  },
+
   async updateSupplierId(documentId, userId, supplierId) {
     await pool.execute(
       `UPDATE documents SET supplier_id = ? WHERE id = ? AND user_id = ?`,
@@ -246,6 +261,22 @@ async findByIdForWorker(documentId) {
       [...documentIds, userId]
     );
     return result.affectedRows || 0;
+  },
+
+  /** IDs owned by user, in requested set, currently failed (for bulk retry). */
+  async findFailedDocumentIdsForUser(userId, documentIds) {
+    if (!documentIds?.length) return [];
+    const ids = documentIds
+      .map((id) => parseInt(id, 10))
+      .filter((n) => !isNaN(n));
+    if (!ids.length) return [];
+    const placeholders = ids.map(() => "?").join(",");
+    const [rows] = await pool.execute(
+      `SELECT id FROM documents
+       WHERE user_id = ? AND status = 'failed' AND id IN (${placeholders})`,
+      [userId, ...ids]
+    );
+    return rows.map((r) => r.id);
   },
 
   async findDefectiveDocuments(userId) {

@@ -49,7 +49,7 @@ const Navbar = () => {
                   Dashboard
                 </Link>
                 <Link to="/documents" className="opacity-90 hover:opacity-100">
-                  Documents
+                  Invoices
                 </Link>
                 <Link to="/suppliers" className="opacity-90 hover:opacity-100">
                   Suppliers
@@ -59,7 +59,7 @@ const Navbar = () => {
           </div>
 
           {/* DESKTOP AUTH */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 mr-2 sm:mr-4">
             {!user ? (
               <button
                 onClick={() => setIsOpen(true)}
@@ -76,17 +76,17 @@ const Navbar = () => {
                   <UserAvatar user={user} size={36} />
                 </button>
                 {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg">
+                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg overflow-hidden">
                     <Link
                       to="/profile"
                       onClick={() => setProfileOpen(false)}
-                      className="w-full px-4 py-2 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800"
+                      className="block w-full px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800 rounded-t-xl"
                     >
                       <FiUser size={14} /> Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full px-4 py-2 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800 text-left"
+                      className="block w-full px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800 text-left rounded-b-xl"
                     >
                       <FiLogOut size={14} /> Logout
                     </button>
@@ -129,7 +129,7 @@ const Navbar = () => {
                     Dashboard
                   </Link>
                   <Link to="/documents" onClick={closeMobileMenu} className="py-3 text-white opacity-90 hover:opacity-100">
-                    Documents
+                    Invoices
                   </Link>
                   <Link to="/suppliers" onClick={closeMobileMenu} className="py-3 text-white opacity-90 hover:opacity-100">
                     Suppliers

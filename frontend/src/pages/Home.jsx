@@ -9,6 +9,7 @@ import {
   FiCheckCircle,
   FiBarChart2,
   FiFileText,
+  FiBriefcase,
   FiArrowRight
 } from "react-icons/fi";
 
@@ -28,10 +29,10 @@ const Home = () => {
             </h1>
 
             <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-700 max-w-3xl mx-auto px-1">
-              Ready to manage your documents? Access your dashboard or upload new PDFs.
+              Ready to manage your invoices?
             </p>
 
-            <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <div className="mt-6 sm:mt-10 flex justify-center">
               <Link
                 to="/dashboard"
                 className="px-8 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 flex items-center gap-2"
@@ -39,16 +40,9 @@ const Home = () => {
                 <FiBarChart2 />
                 Go to Dashboard
               </Link>
-              <Link
-                to="/documents"
-                className="px-8 py-3 rounded-lg bg-white text-slate-900 font-semibold border border-slate-300 hover:bg-slate-50 flex items-center gap-2"
-              >
-                <FiFileText />
-                View Documents
-              </Link>
             </div>
 
-            {/* QUICK STATS CARDS */}
+            {/* QUICK LINKS — one per main section */}
             <div className="mt-12 sm:mt-16 lg:mt-20 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
               <Link
                 to="/dashboard"
@@ -60,7 +54,7 @@ const Home = () => {
                       <FiBarChart2 /> Dashboard
                     </div>
                     <p className="text-sm text-emerald-700 mt-2">
-                      View statistics and analytics
+                      Statistics and analytics
                     </p>
                   </div>
                   <FiArrowRight className="text-emerald-600 group-hover:translate-x-1 transition-transform" />
@@ -77,7 +71,7 @@ const Home = () => {
                       <FiFileText /> Documents
                     </div>
                     <p className="text-sm text-blue-700 mt-2">
-                      Manage and upload PDFs
+                      Upload, manage and export invoice PDFs
                     </p>
                   </div>
                   <FiArrowRight className="text-blue-600 group-hover:translate-x-1 transition-transform" />
@@ -85,16 +79,16 @@ const Home = () => {
               </Link>
 
               <Link
-                to="/documents"
+                to="/suppliers"
                 className="bg-linear-to-br from-violet-50 to-violet-100 rounded-xl shadow-sm p-6 text-left border border-violet-200 hover:shadow-md transition-shadow group"
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2 font-semibold text-violet-900">
-                      <FiUploadCloud /> Upload
+                      <FiBriefcase /> Suppliers
                     </div>
                     <p className="text-sm text-violet-700 mt-2">
-                      Add new documents
+                      Supplier registry
                     </p>
                   </div>
                   <FiArrowRight className="text-violet-600 group-hover:translate-x-1 transition-transform" />
@@ -114,7 +108,7 @@ const Home = () => {
               {[
                 "Save hours of manual data entry",
                 "Reduce human errors",
-                "Centralize your documents",
+                "Centralize your invoices",
                 "GDPR-compliant by design"
               ].map((t, i) => (
                 <div
@@ -141,23 +135,20 @@ const Home = () => {
       <section className="pt-24 sm:pt-32 lg:pt-40 pb-16 sm:pb-24 lg:pb-28 bg-white w-full">
         <div className="w-full px-4 sm:px-6 lg:px-10 text-center">
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 max-w-4xl mx-auto">
-            PDF → Structured data. Automatically.
+            Invoice PDFs → Structured data. Automatically.
           </h1>
 
           <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-700 max-w-3xl mx-auto px-1">
-            Upload invoices and documents. Extract dates, amounts, VAT numbers
+            Upload invoice PDFs. Extract dates, amounts, VAT numbers
             and references in seconds. Ready for CSV exports and integrations.
           </p>
 
-          <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+          <div className="mt-6 sm:mt-10 flex justify-center">
             <button
               onClick={() => setOpenAuth(true)}
               className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700"
             >
               Get started
-            </button>
-            <button className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg bg-white text-slate-900 font-semibold border border-slate-300 hover:bg-slate-50">
-              View demo
             </button>
           </div>
 
@@ -168,7 +159,7 @@ const Home = () => {
                 <FiUploadCloud /> Upload
               </div>
               <p className="text-sm text-slate-600 mt-2">
-                Securely upload PDF documents from your dashboard.
+                Securely upload invoice PDFs from your dashboard.
               </p>
             </div>
 
@@ -186,7 +177,7 @@ const Home = () => {
                 <FiDownload /> Export
               </div>
               <p className="text-sm text-slate-600 mt-2">
-                Export structured data as JSON or CSV, ready to use.
+                Export invoice data as JSON or CSV, ready to use.
               </p>
             </div>
           </div>
@@ -199,7 +190,7 @@ const Home = () => {
           {[
             "Save hours of manual data entry",
             "Reduce human errors",
-            "Centralize your documents",
+            "Centralize your invoices",
             "GDPR-compliant by design"
           ].map((t, i) => (
             <div

@@ -2,21 +2,21 @@
 
 /* FONT GLOBALI */
 :root {
-  --font-title: "DM Serif Display", serif;
-  --font-body: "Inter", sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* IMPOSTAZIONI GENERALI */
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   background-color: #F5F7FA;
   color: #1B1C1E;
   margin: 0;
 }
 
-/* TITOLI — SOLO FONT */
+/* TITOLI — stesso font, peso maggiore per gerarchia */
 h1, h2, h3 {
-  font-family: var(--font-title);
+  font-family: var(--font-sans);
+  font-weight: 700;
 }
 
 /* LINK — TAILWIND GESTISCE I COLORI */

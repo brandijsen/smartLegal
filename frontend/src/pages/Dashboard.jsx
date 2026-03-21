@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api/axios";
 import PageLoader from "../components/PageLoader";
+import { useDashboardData } from "../hooks/useDashboardData";
 import {
   FiFileText,
   FiCheckCircle,
@@ -35,37 +34,7 @@ const STATUS_META = {
 };
 
 const Dashboard = () => {
-  const [overview, setOverview] = useState(null);
-  const [trends, setTrends] = useState(null);
-  const [latestDocuments, setLatestDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      setError(null);
-      try {
-        const [overviewRes, trendsRes, docsRes] = await Promise.all([
-          api.get("/stats/overview"),
-          api.get("/stats/trends"),
-          api.get("/documents?limit=5&page=1").catch(() => ({ data: { documents: [] } })),
-        ]);
-        setOverview(overviewRes.data);
-        setTrends(trendsRes.data);
-        const docs = docsRes?.data?.documents || trendsRes?.data?.latestDocuments || [];
-        setLatestDocuments(Array.isArray(docs) ? docs : []);
-      } catch (err) {
-        console.error("Failed to fetch stats:", err);
-        const msg = err.response?.data?.message || err.message || "Error loading statistics";
-        const status = err.response?.status;
-        setError(status === 401 ? "Session expired. Please log in again." : msg);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+  const { overview, trends, latestDocuments, loading, error } = useDashboardData();
 
   if (loading) {
     return (
@@ -106,7 +75,7 @@ const Dashboard = () => {
   ];
   const typeDistribution = trends?.typeDistribution || [];
   const typeData = typeDistribution
-    .filter((r) => (r.doc_type || r.doc_subtype || "other") && Number(r.count) > 0)
+    .filter((r) => Number(r.count) > 0)
     .map((r, i) => {
       const key = r.doc_subtype
         ? `${r.doc_type || "other"}_${r.doc_subtype}`
@@ -165,16 +134,6 @@ const Dashboard = () => {
       count: item.count,
     })) || [];
 
-  // Total amounts
-  const totalAmounts = overview?.amounts || {};
-  const amountDisplay = Object.entries(totalAmounts)
-    .filter(([, amount]) => amount != null)
-    .map(
-      ([currency, amount]) =>
-        `${currency} ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    )
-    .join(" • ");
-
   return (
     <div className="pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
@@ -182,7 +141,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">Dashboard</h1>
           <p className="text-slate-600 mt-1 text-sm sm:text-base">
-            Overview of your documents and statistics
+            Overview of your invoices and statistics
           </p>
         </div>
 
@@ -283,7 +242,7 @@ const Dashboard = () => {
               </ul>
             ) : (
               <div className="h-[200px] flex items-center justify-center text-slate-500">
-                No documents uploaded yet
+                No invoices uploaded yet
               </div>
             )}
           </div>
@@ -346,7 +305,7 @@ const Dashboard = () => {
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-slate-500">
-                No documents with due dates in the next 60 days
+                No invoices with due dates in the next 60 days
               </div>
             )}
           </div>
@@ -420,7 +379,7 @@ const Dashboard = () => {
                   dataKey="count"
                   stroke="#10b981"
                   strokeWidth={2}
-                  name="Documents"
+                  name="Invoices"
                   activeDot={false}
                 />
               </LineChart>
@@ -445,13 +404,7 @@ const Dashboard = () => {
               to="/documents"
               className="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm font-medium hover:bg-emerald-700 transition-colors"
             >
-              View All Documents
-            </Link>
-            <Link
-              to="/documents"
-              className="px-4 py-2 bg-white text-emerald-700 rounded-md text-sm font-medium hover:bg-emerald-50 border border-emerald-200 transition-colors"
-            >
-              Upload New PDF
+              Upload new invoice
             </Link>
           </div>
         </div>

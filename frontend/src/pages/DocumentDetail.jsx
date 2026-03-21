@@ -101,7 +101,7 @@ const DocumentDetail = () => {
   if (loading) {
     return (
       <div className="pt-24 sm:pt-32 px-4 sm:px-8 min-h-screen bg-[#F5F7FA]">
-        <PageLoader message="Loading document…" />
+        <PageLoader message="Loading invoice…" />
       </div>
     );
   }
@@ -132,7 +132,7 @@ const DocumentDetail = () => {
     return (
       <div className="pt-24 sm:pt-32 px-4 sm:px-8">
         <div className="bg-slate-100 rounded-lg p-4 sm:p-6 text-slate-700 text-sm sm:text-base">
-          Result not available yet. The document may still be processing.
+          Result not available yet. The invoice may still be processing.
         </div>
       </div>
     );
@@ -278,7 +278,7 @@ const DocumentDetail = () => {
               
               {document?.is_defective && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-                  ⚠️ This document is marked as defective. Contact the issuer for a corrected version.
+                  ⚠️ This invoice is marked as defective. Contact the issuer for a corrected version.
                 </div>
               )}
             </div>

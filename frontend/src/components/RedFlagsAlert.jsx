@@ -28,7 +28,7 @@ const RedFlagsAlert = ({ parsed, validationFlags }) => {
           </h3>
           <p className="text-sm text-amber-800 mb-4">
             {combinedFlags.length} issue{combinedFlags.length > 1 ? "s" : ""} detected. 
-            Please review and mark document as defective if needed.
+            Please review and mark invoice as defective if needed.
           </p>
 
           {/* Lista campi problematici */}

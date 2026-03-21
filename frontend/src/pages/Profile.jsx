@@ -63,11 +63,11 @@ const Profile = () => {
     if (!file) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) {
-      setAvatarError("Solo JPEG, PNG e WebP (max 2MB)");
+      setAvatarError("JPEG, PNG or WebP only (max 2MB)");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setAvatarError("Immagine troppo grande (max 2MB)");
+      setAvatarError("Image too large (max 2MB)");
       return;
     }
     setAvatarError("");
@@ -187,7 +187,7 @@ const Profile = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm text-slate-600">
-                JPEG, PNG o WebP. Dimensione massima 2MB.
+                JPEG, PNG or WebP. Max 2MB.
               </p>
               {avatarError && <p className="text-red-600 text-sm mt-1">{avatarError}</p>}
             </div>
@@ -345,7 +345,7 @@ const Profile = () => {
             ) : (
               <>
                 <p className="text-slate-600 text-sm mb-4">
-                  Your account and all data (documents, suppliers, tags) will be permanently deleted. We will send you an email with a link to confirm. This action is irreversible.
+                  Your account and all data (invoices, suppliers, tags) will be permanently deleted. We will send you an email with a link to confirm. This action is irreversible.
                 </p>
                 <form onSubmit={handleRequestDelete} className="space-y-4">
                   {deleteError && <p className="text-red-600 text-sm">{deleteError}</p>}

@@ -5,145 +5,9 @@ import { DocumentService } from "../services/document.service.js";
 import { DocumentModel } from "../models/document.model.js";
 import { DocumentResultModel } from "../models/documentResult.model.js";
 import { SupplierModel } from "../models/supplier.model.js";
-import { documentQueue } from "../queues/documentQueue.js";
-import { generateCSV, generateExcel } from "../services/export.service.js";
-import { createBatch, registerDocumentInBatch } from "../services/batchNotification.service.js";
 import { getFilePath } from "../config/upload.js";
 import { getRequestLogger } from "../middlewares/logger.middleware.js";
 import { logError } from "../utils/logger.js";
-
-/*
-|--------------------------------------------------------------------------
-| UPLOAD DOCUMENT (supports single and multiple files)
-|--------------------------------------------------------------------------
-| - creates documents records
-| - queues jobs
-| - registers batch for grouped notifications
-| - does NOT touch document_results
-*/
-export const uploadDocument = async (req, res) => {
-  const log = getRequestLogger(req);
-  
-  try {
-    // Support both single and multiple files
-    const files = req.files || (req.file ? [req.file] : []);
-    
-    if (files.length === 0) {
-      log.warn("Upload attempted without files");
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const userId = req.user.id;
-    const documents = [];
-    
-    // Create batch ID if multiple upload (2+ files)
-    const batchId = files.length > 1 ? createBatch(userId, files.length) : null;
-
-    log.info("Document upload started", {
-      fileCount: files.length,
-      batchId,
-      fileNames: files.map(f => f.originalname)
-    });
-
-    // Process each file
-    for (const file of files) {
-      const document = await DocumentService.upload({
-        userId,
-        file,
-      });
-
-      try {
-        await Promise.race([
-          documentQueue.add("process-document", { documentId: document.id }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Queue timeout: Redis unavailable")), 5000)
-          ),
-        ]);
-      } catch (queueErr) {
-        log.warn("Document queued as pending (Redis unavailable)", {
-          documentId: document.id,
-          error: queueErr.message,
-        });
-      }
-      
-      // Register in batch if multiple upload
-      if (batchId) {
-        await registerDocumentInBatch(batchId, document.id, file.originalname);
-      }
-
-      documents.push(document);
-    }
-
-    log.info("Document upload completed successfully", {
-      fileCount: files.length,
-      documentIds: documents.map(d => d.id)
-    });
-
-    // Response
-    if (files.length === 1) {
-      res.status(201).json(documents[0]);
-    } else {
-      res.status(201).json({
-        message: `${files.length} documents uploaded successfully`,
-        documents,
-        batchId
-      });
-    }
-  } catch (err) {
-    logError(err, {
-      operation: "uploadDocument",
-      userId: req.user?.id,
-      fileCount: (req.files || []).length
-    });
-    res.status(500).json({ message: "Upload failed" });
-  }
-};
-
-/*
-|--------------------------------------------------------------------------
-| RETRY DOCUMENT
-|--------------------------------------------------------------------------
-*/
-export const retryDocument = async (req, res) => {
-  const log = getRequestLogger(req);
-  
-  try {
-    const documentId = req.params.id;
-    const userId = req.user.id;
-
-    const document = await DocumentService.getDocumentById(documentId, userId);
-
-    if (document.status !== "failed") {
-      log.warn("Retry attempted on non-failed document", { documentId, status: document.status });
-      return res
-        .status(400)
-        .json({ message: "Only failed documents can be retried" });
-    }
-
-    await DocumentModel.updateStatus(documentId, "pending");
-    try {
-      await Promise.race([
-        documentQueue.add("process-document", { documentId }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Queue timeout: Redis unavailable")), 5000)
-        ),
-      ]);
-    } catch (queueErr) {
-      log.warn("Retry queued as pending (Redis unavailable)", { documentId, error: queueErr.message });
-    }
-
-    log.info("Document retry queued", { documentId });
-
-    res.json({ message: "Document re-queued successfully" });
-  } catch (err) {
-    logError(err, {
-      operation: "retryDocument",
-      userId: req.user?.id,
-      documentId: req.params.id
-    });
-    res.status(500).json({ message: "Retry failed" });
-  }
-};
 
 /*
 |--------------------------------------------------------------------------
@@ -406,19 +270,14 @@ export const exportDocumentsCSV = async (req, res) => {
 
     log.info("CSV export started", { userId, documentCount: documents.length });
 
-    // Enrich with parsed_json
-    const enriched = await Promise.all(
-      documents.map(async (doc) => {
-        const result = await DocumentResultModel.findParsedByDocumentId(doc.id);
-        return {
-          ...doc,
-          parsed_json:
-            typeof result?.parsed_json === "string"
-              ? JSON.parse(result.parsed_json)
-              : result?.parsed_json || null
-        };
-      })
-    );
+    // parsed_json already from findByUser JOIN with document_results
+    const enriched = documents.map((doc) => ({
+      ...doc,
+      parsed_json:
+        typeof doc.parsed_json === "string"
+          ? JSON.parse(doc.parsed_json)
+          : doc.parsed_json || null
+    }));
 
     const csv = generateCSV(enriched);
 
@@ -480,71 +339,6 @@ export const updateDocumentResult = async (req, res) => {
       documentId: req.params.id
     });
     res.status(500).json({ message: "Update failed" });
-  }
-};
-
-/*
-|--------------------------------------------------------------------------
-| EXPORT DOCUMENTS EXCEL
-|--------------------------------------------------------------------------
-*/
-export const exportDocumentsExcel = async (req, res) => {
-  const log = getRequestLogger(req);
-  
-  try {
-    const userId = req.user.id;
-    const filters = {
-      status: req.query.status || "all",
-      dateFrom: req.query.dateFrom || null,
-      dateTo: req.query.dateTo || null,
-      search: req.query.search || null,
-      defective: req.query.defective || "all",
-      supplier: req.query.supplier || "all",
-      tag: req.query.tag || "all"
-    };
-
-    const { documents } = await DocumentModel.findByUser(userId, {
-      page: 1,
-      limit: 10000,
-      exportMode: true,
-      filters
-    });
-
-    log.info("Excel export started", { userId, documentCount: documents.length });
-
-    // Enrich with parsed_json
-    const enriched = await Promise.all(
-      documents.map(async (doc) => {
-        const result = await DocumentResultModel.findParsedByDocumentId(doc.id);
-        return {
-          ...doc,
-          parsed_json:
-            typeof result?.parsed_json === "string"
-              ? JSON.parse(result.parsed_json)
-              : result?.parsed_json || null
-        };
-      })
-    );
-
-    const buffer = generateExcel(enriched);
-
-    log.info("Excel export completed", { userId, size: buffer.length });
-
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="documents-${Date.now()}.xlsx"`
-    );
-    res.send(buffer);
-  } catch (err) {
-    logError(err, {
-      operation: "exportDocumentsExcel",
-      userId: req.user?.id
-    });
-    res.status(500).json({ message: "Export failed" });
   }
 };
 

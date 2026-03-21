@@ -81,39 +81,33 @@ function getDueTagKey(dueDate) {
 async function ensureDueTags(userId) {
   const uid = parseInt(userId, 10);
   if (isNaN(uid)) throw new Error("Invalid userId");
-  for (const oldName of REPLACED_TAG_NAMES) {
-    const [r] = await pool.query(
-      `DELETE FROM tags WHERE user_id = ? AND name = ?`,
-      [uid, oldName]
+
+  if (REPLACED_TAG_NAMES.length) {
+    const ph = REPLACED_TAG_NAMES.map(() => "?").join(",");
+    const [delRes] = await pool.query(
+      `DELETE FROM tags WHERE user_id = ? AND name IN (${ph})`,
+      [uid, ...REPLACED_TAG_NAMES]
     );
-    if (r?.affectedRows > 0) {
-      logger.info("Removed replaced tag", { userId: uid, name: oldName });
+    if (delRes?.affectedRows > 0) {
+      logger.info("Removed replaced legacy tags", { userId: uid, count: delRes.affectedRows });
     }
   }
+
+  const tuples = DUE_TAG_DEFS.map(() => "(?, ?, ?)").join(", ");
+  const insertParams = DUE_TAG_DEFS.flatMap((d) => [uid, d.name, d.color]);
+  await pool.query(
+    `INSERT IGNORE INTO tags (user_id, name, color) VALUES ${tuples}`,
+    insertParams
+  );
+
   const tags = await TagModel.findByUser(uid, { limit: 500 });
   const byName = Object.fromEntries(tags.map((t) => [t.name, t]));
   const result = {};
-
   for (const def of DUE_TAG_DEFS) {
-    let tag = byName[def.name];
+    const tag = byName[def.name];
     if (!tag) {
-      try {
-        tag = await TagModel.create({
-          userId: uid,
-          name: def.name,
-          color: def.color
-        });
-        logger.info("Created due tag", { userId: uid, tagId: tag.id, name: def.name });
-      } catch (err) {
-        if (err.code === "ER_DUP_ENTRY" || err.errno === 1062) {
-          const refreshed = await TagModel.findByUser(uid, { limit: 500 });
-          tag = refreshed.find((t) => t.name === def.name);
-          if (!tag) throw err;
-        } else {
-          throw err;
-        }
-      }
-      byName[def.name] = tag;
+      logger.warn("Due tag missing after INSERT IGNORE", { userId: uid, name: def.name });
+      continue;
     }
     const tid = parseInt(tag.id, 10);
     if (!isNaN(tid)) result[def.key] = tid;
@@ -188,22 +182,31 @@ export async function syncDueDatesForAllDocuments() {
        AND d.status = 'done'`
   );
 
-  let updated = 0;
-  for (const row of rows) {
+  const CONCURRENCY = 10;
+
+  async function processRow(row) {
     try {
       const parsed =
         typeof row.parsed_json === "string" ? JSON.parse(row.parsed_json) : row.parsed_json;
       const semantic = parsed?.semantic;
-      if (!semantic) continue;
+      if (!semantic) return false;
 
       await syncDueDateForDocument(row.document_id, row.user_id, semantic);
-      updated++;
+      return true;
     } catch (err) {
       logger.warn("Due tag sync failed for document", {
         documentId: row.document_id,
         error: err.message
       });
+      return false;
     }
+  }
+
+  let updated = 0;
+  for (let i = 0; i < rows.length; i += CONCURRENCY) {
+    const chunk = rows.slice(i, i + CONCURRENCY);
+    const ok = await Promise.all(chunk.map((row) => processRow(row)));
+    updated += ok.filter(Boolean).length;
   }
 
   return { updated };

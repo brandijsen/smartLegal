@@ -7,12 +7,9 @@ const PageLoader = ({ message = "Loading…", variant = "page", className = "" }
 
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-4 ${className}`}
-      style={
-        isPage
-          ? { minHeight: "calc(100vh - 8rem)", padding: "2rem" }
-          : { minHeight: 200 }
-      }
+      className={`flex flex-col items-center justify-center gap-4 ${
+        isPage ? "min-h-[calc(100vh-8rem)] p-8" : "min-h-[200px]"
+      } ${className}`}
     >
       <div
         className="animate-spin h-10 w-10 rounded-full border-4 border-slate-200 border-t-emerald-600"

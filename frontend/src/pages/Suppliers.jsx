@@ -51,7 +51,7 @@ const Suppliers = () => {
             Suppliers
           </h1>
           <p className="text-slate-600 mt-1">
-            Supplier registry. Linked automatically when documents are processed.
+            Supplier registry. Linked automatically when invoices are processed.
           </p>
         </div>
 
@@ -159,7 +159,7 @@ const Suppliers = () => {
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700"
               >
                 <FiFileText size={18} />
-                View documents
+                View invoices
               </Link>
             </div>
           </div>

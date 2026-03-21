@@ -71,19 +71,32 @@ export const TagModel = {
     const docId = parseInt(documentId, 10);
     const uid = parseInt(userId, 10);
     if (isNaN(docId) || isNaN(uid)) return [];
-    await pool.query(
-      `DELETE FROM document_tags WHERE document_id = ?`,
-      [docId]
-    );
+    await pool.query(`DELETE FROM document_tags WHERE document_id = ?`, [docId]);
     if (!tagIds || tagIds.length === 0) return this.getTagsForDocument(docId, uid);
-    for (const tagId of tagIds) {
-      const tid = parseInt(tagId, 10);
-      if (isNaN(tid)) continue;
-      await pool.query(
-        `INSERT INTO document_tags (document_id, tag_id) VALUES (?, ?)`,
-        [docId, tid]
-      );
-    }
+
+    const requested = [
+      ...new Set(
+        tagIds
+          .map((tagId) => parseInt(tagId, 10))
+          .filter((n) => !isNaN(n))
+      ),
+    ];
+    if (requested.length === 0) return this.getTagsForDocument(docId, uid);
+
+    const ph = requested.map(() => "?").join(",");
+    const [validRows] = await pool.query(
+      `SELECT id FROM tags WHERE user_id = ? AND id IN (${ph})`,
+      [uid, ...requested]
+    );
+    const validIds = validRows.map((r) => r.id);
+    if (validIds.length === 0) return this.getTagsForDocument(docId, uid);
+
+    const tuples = validIds.map(() => "(?, ?)").join(", ");
+    const flat = validIds.flatMap((tid) => [docId, tid]);
+    await pool.query(
+      `INSERT INTO document_tags (document_id, tag_id) VALUES ${tuples}`,
+      flat
+    );
     return this.getTagsForDocument(docId, uid);
   }
 };

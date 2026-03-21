@@ -84,9 +84,9 @@ const DocumentFilters = ({ filters: parentFilters = defaultFilters, onFilterChan
     filters.search;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
+    <div className={`bg-white rounded-lg border border-slate-200 p-4 ${isOpen ? "w-full" : "w-fit ml-auto"}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={`flex items-center justify-between ${isOpen ? "mb-4" : ""}`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 text-slate-700 font-medium hover:text-slate-900"
@@ -95,15 +95,25 @@ const DocumentFilters = ({ filters: parentFilters = defaultFilters, onFilterChan
           Filters {hasActiveFilters && `(${[statusDisplayValue !== "all", filters.supplier && filters.supplier !== "all", filters.tag && filters.tag !== "all", filters.dateFrom, filters.dateTo, filters.search].filter(Boolean).length})`}
         </button>
 
-        {hasActiveFilters && (
+        <div className="flex items-center gap-2">
+          {isOpen && (
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+              aria-label="Close filters"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          )}
+          {hasActiveFilters && (
           <button
             onClick={handleReset}
             className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"
           >
-            <FiX className="w-4 h-4" />
             Clear all
           </button>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Filters Form */}

@@ -1,11 +1,11 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
+  const user = useSelector((state) => state.auth.user);
 
-  const storedToken = localStorage.getItem("accessToken");
-
-  if (!storedToken) {
+  if (!user) {
     return (
       <Navigate
         to="/"

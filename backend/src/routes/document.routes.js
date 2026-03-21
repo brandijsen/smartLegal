@@ -4,21 +4,26 @@ import { uploadPDF } from "../middlewares/upload.middleware.js";
 import { uploadRateLimiter } from "../middlewares/rateLimiter.middleware.js";
 import {
   uploadDocument,
+  retryDocument,
+  bulkRetryDocuments,
+} from "../controllers/document-upload.controller.js";
+import {
+  exportDocumentsCSV,
+  exportDocumentsExcel,
+} from "../controllers/document-export.controller.js";
+import {
   getUserDocuments,
   getDocumentById,
-  retryDocument,
   deleteDocument,
   getDocumentResult,
   getDocumentRaw,
   downloadDocument,
-  exportDocumentsCSV,
-  exportDocumentsExcel,
   updateDocumentResult,
   updateDocumentSupplier,
   bulkUnmarkDefective,
   markDocumentDefective,
   unmarkDocumentDefective,
-  getDefectiveDocuments
+  getDefectiveDocuments,
 } from "../controllers/document.controller.js";
 import { getDocumentTags, setDocumentTags } from "../controllers/tag.controller.js";
 
@@ -33,6 +38,7 @@ router.get("/export/excel", protect, exportDocumentsExcel);
 // Defective documents
 router.get("/defective/list", protect, getDefectiveDocuments);
 router.post("/bulk-unmark-defective", protect, bulkUnmarkDefective);
+router.post("/bulk-retry", protect, bulkRetryDocuments);
 
 // Download route (PRIMA di /:id)
 router.get("/:id/download", protect, downloadDocument);

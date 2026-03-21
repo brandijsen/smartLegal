@@ -140,7 +140,7 @@ const Documents = () => {
       await api.delete(`/documents/${documentId}`);
       await fetchDocuments();
       showToast("Document deleted");
-    } catch (err) {
+    } catch {
       showToast("Unable to delete document");
     } finally {
       setBulkProcessing(false);
@@ -164,10 +164,24 @@ const Documents = () => {
     }
   };
 
-  // Bulk delete - opens confirm modal
-  const openBulkDeleteConfirm = () => {
+  const performBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    setDeleteConfirm({ bulk: [...selectedIds] });
+    setBulkProcessing(true);
+    setConfirmingBulkDelete(false);
+    try {
+      for (const id of selectedIds) {
+        await api.delete(`/documents/${id}`);
+      }
+      setSelectedIds([]);
+      await fetchDocuments();
+      showToast("Documents deleted");
+    } catch (err) {
+      console.error("Bulk delete failed", err);
+      showToast("Some documents could not be deleted");
+      await fetchDocuments();
+    } finally {
+      setBulkProcessing(false);
+    }
   };
 
   // Bulk retry
@@ -178,21 +192,19 @@ const Documents = () => {
     });
 
     if (failedSelected.length === 0) {
-      showToast("No failed documents selected");
+      showToast("No failed invoices selected");
       return;
     }
 
     setBulkProcessing(true);
 
     try {
-      await Promise.all(
-        failedSelected.map((id) => api.post(`/documents/${id}/retry`))
-      );
+      await api.post("/documents/bulk-retry", { documentIds: failedSelected });
       setSelectedIds([]);
       await fetchDocuments();
     } catch (err) {
       console.error("Bulk retry failed", err);
-      showToast("Some documents could not be retried");
+      showToast("Some invoices could not be retried");
     } finally {
       setBulkProcessing(false);
     }
@@ -318,7 +330,12 @@ const Documents = () => {
     <div className="pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl font-semibold">Your documents</h1>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold">Your invoices</h1>
+            <p className="text-slate-600 mt-1 text-sm sm:text-base">
+              Upload invoice PDFs, view parsed data and export to CSV or Excel
+            </p>
+          </div>
 
           {/* Export Buttons */}
           {documents.length > 0 && (
@@ -352,10 +369,10 @@ const Documents = () => {
         />
 
         {loading ? (
-          <PageLoader message="Loading documents…" />
+          <PageLoader message="Loading invoices…" />
         ) : documents.length === 0 ? (
           <div className="bg-white rounded-lg p-8 text-slate-600">
-            No documents uploaded yet.
+            No invoices uploaded yet.
           </div>
         ) : (
           <>
@@ -364,8 +381,8 @@ const Documents = () => {
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-sm font-medium text-emerald-800">
                   {confirmingBulkDelete
-                    ? `Delete ${selectedIds.length} document(s)?`
-                    : `${selectedIds.length} document(s) selected`}
+                    ? `Delete ${selectedIds.length} invoice(s)?`
+                    : `${selectedIds.length} invoice(s) selected`}
                 </span>
 
                 <div className="flex flex-wrap gap-2">
@@ -450,7 +467,6 @@ const Documents = () => {
                       (typeof doc.parsed_json === 'string' ? JSON.parse(doc.parsed_json) : doc.parsed_json) 
                       : null;
                     const hasFlags = parsed && hasRedFlags(parsed);
-                    const isManuallyEdited = doc.manually_edited === 1;
 
                     return (
                       <tr
@@ -571,7 +587,7 @@ const Documents = () => {
             {pagination.totalPages > 1 && (
               <div className="bg-white rounded-lg border border-slate-200 p-4 flex items-center justify-between">
                 <div className="text-sm text-slate-600">
-                  Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total documents)
+                  Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total invoices)
                 </div>
 
                 <div className="flex gap-2">

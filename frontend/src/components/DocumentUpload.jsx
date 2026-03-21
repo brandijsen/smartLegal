@@ -14,7 +14,7 @@ const DocumentUpload = ({ onUploaded }) => {
     );
 
     if (pdfFiles.length === 0) {
-      setError("Only PDF files are allowed");
+      setError("Only invoice PDFs are allowed");
       setTimeout(() => setError(""), 3000);
       return;
     }
@@ -234,7 +234,7 @@ const DocumentUpload = ({ onUploaded }) => {
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        className={`bg-white rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+        className={`bg-white rounded-xl border-2 border-dashed py-10 px-8 text-center transition-colors max-w-xl mx-auto ${
           isDragging
             ? "border-emerald-500 bg-emerald-50"
             : "border-slate-300 hover:border-slate-400"
@@ -262,11 +262,11 @@ const DocumentUpload = ({ onUploaded }) => {
           disabled={isUploading}
           className="px-6 py-2 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isUploading ? "Uploading…" : "Select PDFs"}
+          {isUploading ? "Uploading…" : "Select invoice PDFs"}
         </button>
 
         <p className="text-xs text-slate-500 mt-4">
-          You can upload multiple PDFs at once
+          You can upload multiple invoice PDFs at once
         </p>
 
         {error && (
