@@ -6,6 +6,7 @@ import { logAuth, logError } from "../../utils/logger.js";
 import { getRequestLogger } from "../../middlewares/logger.middleware.js";
 import { setRefreshCookie, setAccessCookie } from "../../utils/authCookies.js";
 import { createAccessToken, createRefreshToken } from "./auth.shared.js";
+import { invalidateUserAuthCache } from "../../utils/userAuthCache.js";
 
 async function verifyEmailTokenAndSetSession(token, res) {
   const [rows] = await pool.execute(
@@ -17,6 +18,7 @@ async function verifyEmailTokenAndSetSession(token, res) {
   if (!user) return false;
 
   await User.verifyUser(user.id);
+  invalidateUserAuthCache(user.id);
 
   const accessToken = createAccessToken(user);
   const refreshToken = createRefreshToken(user);

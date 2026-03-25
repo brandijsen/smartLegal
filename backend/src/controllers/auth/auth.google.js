@@ -10,6 +10,7 @@ import {
   clearOAuthStateCookie,
 } from "../../utils/authCookies.js";
 import { googleClient, createAccessToken, createRefreshToken } from "./auth.shared.js";
+import { invalidateUserAuthCache } from "../../utils/userAuthCache.js";
 
 export const googleAuth = async (req, res) => {
   const state = crypto.randomBytes(24).toString("hex");
@@ -66,6 +67,7 @@ export const googleCallback = async (req, res) => {
       });
 
       await User.verifyUser(user.id);
+      invalidateUserAuthCache(user.id);
 
       logAuth("google_user_created", { userId: user.id, email });
     } else {
